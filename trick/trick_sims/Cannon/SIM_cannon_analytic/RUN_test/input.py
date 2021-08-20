@@ -1,5 +1,5 @@
-exec(open("Modified_data/cannon.dr").read())
-exec(open("Modified_data/realtime.py").read())
+execfile("Modified_data/cannon.dr")
+execfile("Modified_data/realtime.py")
 
 trick.exec_set_terminate_time(5.2)
 

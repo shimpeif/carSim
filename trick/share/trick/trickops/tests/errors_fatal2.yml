@@ -1,4 +1,0 @@
-# YAML file with fatal error used for unit testing
-# Doesn't conform to expected dict format
-SIM_alloc_test
-    path - test/SIM_alloc_test

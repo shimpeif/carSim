@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-int echo_jobs_on(void) ;
-int echo_jobs_off(void) ;
+int echo_jobs_on() ;
+int echo_jobs_off() ;
 
 #ifdef __cplusplus
 }

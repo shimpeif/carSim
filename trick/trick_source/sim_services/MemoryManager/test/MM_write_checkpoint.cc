@@ -52,13 +52,12 @@ int strcmp_IgnoringWhiteSpace(const char* s1, const char* s2) {
 TEST_F(MM_write_checkpoint, string_singleton) {
 
     std::stringstream ss;
-    std::string s;
 
     std::string *string_p = (std::string*)memmgr->declare_var("std::string string_singleton");
     *string_p = "string_singleton_test";
 
     memmgr->write_checkpoint( ss, "string_singleton");
-    s = ss.str();
+
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
         "std::string string_singleton;"
@@ -66,7 +65,7 @@ TEST_F(MM_write_checkpoint, string_singleton) {
         "clear_all_vars();"
         "// Variable Assignments."
         "string_singleton = \"string_singleton_test\";"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -75,13 +74,11 @@ TEST_F(MM_write_checkpoint, string_singleton) {
 TEST_F(MM_write_checkpoint, dbl_singleton) {
 
     std::stringstream ss;
-    std::string s;
 
     double *dbl_p = (double*)memmgr->declare_var("double dbl_singleton");
     *dbl_p = 3.1415;
 
     memmgr->write_checkpoint( ss, "dbl_singleton");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -90,7 +87,7 @@ TEST_F(MM_write_checkpoint, dbl_singleton) {
         "clear_all_vars();"
         "// Variable Assignments."
         "dbl_singleton = 3.1415;"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -100,14 +97,12 @@ TEST_F(MM_write_checkpoint, dbl_singleton) {
 TEST_F(MM_write_checkpoint, bool_singleton) {
 
     std::stringstream ss;
-    std::string s;
 
     bool *bool_p = (bool*)memmgr->declare_var("bool bool_singleton");
     *bool_p = true;
 
     //memmgr->write_checkpoint( std::cout, "bool_singleton");
     memmgr->write_checkpoint( ss, "bool_singleton");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -116,7 +111,7 @@ TEST_F(MM_write_checkpoint, bool_singleton) {
         "clear_all_vars();"
         "// Variable Assignments."
         "bool_singleton = true;"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -125,7 +120,6 @@ TEST_F(MM_write_checkpoint, bool_singleton) {
 TEST_F(MM_write_checkpoint, dbl_pointer) {
 
     std::stringstream ss;
-    std::string s;
 
     double **dbl_pp = (double**)memmgr->declare_var("double *dbl_pointer");
     double *dbl_p = (double*)memmgr->declare_var("double dbl_array[2]");
@@ -135,7 +129,6 @@ TEST_F(MM_write_checkpoint, dbl_pointer) {
     dbl_p[1] = 2.0;
 
     memmgr->write_checkpoint( ss, "dbl_pointer");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -146,7 +139,7 @@ TEST_F(MM_write_checkpoint, dbl_pointer) {
         "// Variable Assignments."
         "dbl_pointer = &dbl_array[0];"
         "dbl_array = {1, 2};"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -155,7 +148,6 @@ TEST_F(MM_write_checkpoint, dbl_pointer) {
 TEST_F(MM_write_checkpoint, bool_pointer) {
 
     std::stringstream ss;
-    std::string s;
 
     bool **bool_pp = (bool**)memmgr->declare_var("bool *bool_pointer");
     bool *bool_p = (bool*)memmgr->declare_var("bool bool_array[2]");
@@ -165,7 +157,6 @@ TEST_F(MM_write_checkpoint, bool_pointer) {
     bool_p[1] = false;
 
     memmgr->write_checkpoint( ss, "bool_pointer");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -176,7 +167,7 @@ TEST_F(MM_write_checkpoint, bool_pointer) {
         "// Variable Assignments."
         "bool_pointer = &bool_array[0];"
         "bool_array = {true, false};"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -185,7 +176,6 @@ TEST_F(MM_write_checkpoint, bool_pointer) {
 TEST_F(MM_write_checkpoint, dbl_array) {
 
     std::stringstream ss;
-    std::string s;
 
     double *dbl_p = (double*)memmgr->declare_var("double dbl_array[3]");
 
@@ -194,7 +184,6 @@ TEST_F(MM_write_checkpoint, dbl_array) {
     dbl_p[2] = 3.3;
 
     memmgr->write_checkpoint( ss, "dbl_array");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -204,7 +193,7 @@ TEST_F(MM_write_checkpoint, dbl_array) {
         "// Variable Assignments."
         "dbl_array = "
         "    {1.1, 2.2, 3.3};"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -213,7 +202,6 @@ TEST_F(MM_write_checkpoint, dbl_array) {
 TEST_F(MM_write_checkpoint, dbl_array_expanded) {
 
     std::stringstream ss;
-    std::string s;
 
     double *dbl_p = (double*)memmgr->declare_var("double dbl_array[3]");
 
@@ -223,7 +211,6 @@ TEST_F(MM_write_checkpoint, dbl_array_expanded) {
 
     memmgr->set_expanded_arrays(true);
     memmgr->write_checkpoint( ss, "dbl_array");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -235,7 +222,7 @@ TEST_F(MM_write_checkpoint, dbl_array_expanded) {
         "dbl_array[1] = 2.2;"
         "dbl_array[2] = 3.3;"
 
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -244,7 +231,6 @@ TEST_F(MM_write_checkpoint, dbl_array_expanded) {
 TEST_F(MM_write_checkpoint, dbl_array_pointers) {
 
     std::stringstream ss;
-    std::string s;
 
     double **dbl_pa = (double**)memmgr->declare_var("double *dbl_array_ptrs[3]");
 
@@ -257,8 +243,6 @@ TEST_F(MM_write_checkpoint, dbl_array_pointers) {
     dbl_pa[2] = dbl_p3;
 
     memmgr->write_checkpoint( ss, "dbl_array_ptrs");
-
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -271,7 +255,7 @@ TEST_F(MM_write_checkpoint, dbl_array_pointers) {
         "// Variable Assignments."
         "dbl_array_ptrs = "
         "    {&dbl1, &dbl2, &dbl3};"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -280,7 +264,6 @@ TEST_F(MM_write_checkpoint, dbl_array_pointers) {
 TEST_F(MM_write_checkpoint, dbl_array_pointers_expanded) {
 
     std::stringstream ss;
-    std::string s;
 
     double **dbl_pa = (double**)memmgr->declare_var("double *dbl_array_ptrs[3]");
 
@@ -294,7 +277,6 @@ TEST_F(MM_write_checkpoint, dbl_array_pointers_expanded) {
 
     memmgr->set_expanded_arrays(true);
     memmgr->write_checkpoint( ss, "dbl_array_ptrs");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -308,7 +290,7 @@ TEST_F(MM_write_checkpoint, dbl_array_pointers_expanded) {
         "dbl_array_ptrs[0] = &dbl1;"
         "dbl_array_ptrs[1] = &dbl2;"
         "dbl_array_ptrs[2] = &dbl3;"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -317,7 +299,6 @@ TEST_F(MM_write_checkpoint, dbl_array_pointers_expanded) {
 TEST_F(MM_write_checkpoint, dbl_2d_constrained_array) {
 
     std::stringstream ss;
-    std::string s;
 
     double (*A)[3][4] = (double(*)[3][4])memmgr->declare_var("double A[3][4]");
 
@@ -335,7 +316,6 @@ TEST_F(MM_write_checkpoint, dbl_2d_constrained_array) {
     (*A)[2][3] = 23.0;
 
     memmgr->write_checkpoint( ss, "A");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -349,7 +329,7 @@ TEST_F(MM_write_checkpoint, dbl_2d_constrained_array) {
         "        {10, 11, 12, 13},"
         "        {20, 21, 22, 23}"
         "    };"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -358,7 +338,6 @@ TEST_F(MM_write_checkpoint, dbl_2d_constrained_array) {
 TEST_F(MM_write_checkpoint, dbl_2d_constrained_array_expanded) {
 
     std::stringstream ss;
-    std::string s;
 
     double (*A)[3][4] = (double(*)[3][4])memmgr->declare_var("double A[3][4]");
 
@@ -377,7 +356,6 @@ TEST_F(MM_write_checkpoint, dbl_2d_constrained_array_expanded) {
 
     memmgr->set_expanded_arrays(true);
     memmgr->write_checkpoint( ss, "A");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -396,7 +374,7 @@ TEST_F(MM_write_checkpoint, dbl_2d_constrained_array_expanded) {
         "A[2][1] = 21;"
         "A[2][2] = 22;"
         "A[2][3] = 23;"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -405,7 +383,6 @@ TEST_F(MM_write_checkpoint, dbl_2d_constrained_array_expanded) {
 TEST_F(MM_write_checkpoint, enum_singleton) {
 
     std::stringstream ss;
-    std::string s;
 
 //    memmgr->set_debug_level(2);
 
@@ -413,7 +390,6 @@ TEST_F(MM_write_checkpoint, enum_singleton) {
     *enum_p = FEBRUARY;
 
     memmgr->write_checkpoint( ss, "enum_singleton");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -422,7 +398,7 @@ TEST_F(MM_write_checkpoint, enum_singleton) {
         "clear_all_vars();"
         "// Variable Assignments."
         "enum_singleton = FEBRUARY;"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -431,7 +407,6 @@ TEST_F(MM_write_checkpoint, enum_singleton) {
 TEST_F(MM_write_checkpoint, enum_pointer) {
 
     std::stringstream ss;
-    std::string s;
 
     MONTH **enum_pp = (MONTH**)memmgr->declare_var("MONTH *enum_pointer");
     MONTH *enum_p = (MONTH*)memmgr->declare_var("MONTH enum_array[2]");
@@ -441,7 +416,6 @@ TEST_F(MM_write_checkpoint, enum_pointer) {
     enum_p[1] = APRIL;
 
     memmgr->write_checkpoint( ss, "enum_pointer");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -453,7 +427,7 @@ TEST_F(MM_write_checkpoint, enum_pointer) {
         "enum_pointer = &enum_array[0];"
         "enum_array = "
         "    {MARCH, APRIL};"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -462,7 +436,6 @@ TEST_F(MM_write_checkpoint, enum_pointer) {
 TEST_F(MM_write_checkpoint, enum_array) {
 
     std::stringstream ss;
-    std::string s;
 
     MONTH *enum_p = (MONTH*)memmgr->declare_var("MONTH enum_array[3]");
 
@@ -471,7 +444,6 @@ TEST_F(MM_write_checkpoint, enum_array) {
     enum_p[2] = AUGUST;
 
     memmgr->write_checkpoint( ss, "enum_array");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -481,7 +453,7 @@ TEST_F(MM_write_checkpoint, enum_array) {
         "// Variable Assignments."
         "enum_array = "
         "    {JUNE, JULY, AUGUST};"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -490,7 +462,6 @@ TEST_F(MM_write_checkpoint, enum_array) {
 TEST_F(MM_write_checkpoint, enum_array_pointers) {
 
     std::stringstream ss;
-    std::string s;
 
     MONTH **enum_pa = (MONTH**)memmgr->declare_var("MONTH *enum_array_ptrs[3]");
 
@@ -503,7 +474,6 @@ TEST_F(MM_write_checkpoint, enum_array_pointers) {
     enum_pa[2] = enum_p3;
 
     memmgr->write_checkpoint( ss, "enum_array_ptrs");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -516,7 +486,7 @@ TEST_F(MM_write_checkpoint, enum_array_pointers) {
         "// Variable Assignments."
         "enum_array_ptrs = "
         "    {&enum1, &enum2, &enum3};"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -525,7 +495,6 @@ TEST_F(MM_write_checkpoint, enum_array_pointers) {
 TEST_F(MM_write_checkpoint, udt_singleton_no_deps) {
 
     std::stringstream ss;
-    std::string s;
 
     UDT1 *udt_p = (UDT1*)memmgr->declare_var("UDT1 udt_singleton");
 
@@ -534,7 +503,6 @@ TEST_F(MM_write_checkpoint, udt_singleton_no_deps) {
     udt_p->dbl_p = NULL;
 
     memmgr->write_checkpoint( ss, "udt_singleton");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -543,7 +511,7 @@ TEST_F(MM_write_checkpoint, udt_singleton_no_deps) {
         "clear_all_vars();"
         "// Variable Assignments."
         "udt_singleton.x = 3.1415;"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -552,7 +520,6 @@ TEST_F(MM_write_checkpoint, udt_singleton_no_deps) {
 TEST_F(MM_write_checkpoint, udt_singleton_self_referential) {
 
     std::stringstream ss;
-    std::string s;
 
     UDT1 *udt_p = (UDT1*)memmgr->declare_var("UDT1 udt_singleton");
 
@@ -561,7 +528,6 @@ TEST_F(MM_write_checkpoint, udt_singleton_self_referential) {
     udt_p->dbl_p = NULL;
 
     memmgr->write_checkpoint( ss, "udt_singleton");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -571,7 +537,7 @@ TEST_F(MM_write_checkpoint, udt_singleton_self_referential) {
         "// Variable Assignments."
         "udt_singleton.x = 3.1415;"
         "udt_singleton.udt_p = &udt_singleton.x;"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -580,7 +546,6 @@ TEST_F(MM_write_checkpoint, udt_singleton_self_referential) {
 TEST_F(MM_write_checkpoint, udt_singleton_deps) {
 
     std::stringstream ss;
-    std::string s;
 
     UDT1 *udt1_p = (UDT1*)memmgr->declare_var("UDT1 udt1");
     UDT1 *udt2_p = (UDT1*)memmgr->declare_var("UDT1 udt2");
@@ -591,7 +556,6 @@ TEST_F(MM_write_checkpoint, udt_singleton_deps) {
     udt1_p->dbl_p = dbl1_p;
 
     memmgr->write_checkpoint( ss, "udt1");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         ""
@@ -605,7 +569,7 @@ TEST_F(MM_write_checkpoint, udt_singleton_deps) {
         "udt1.x = 3.1415;"
         "udt1.udt_p = &udt2.x;"
         "udt1.dbl_p = &dbl1;"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -614,7 +578,6 @@ TEST_F(MM_write_checkpoint, udt_singleton_deps) {
 TEST_F(MM_write_checkpoint, udt_pointer) {
 
     std::stringstream ss;
-    std::string s;
 
     UDT1 **udt1_p = (UDT1**)memmgr->declare_var("UDT1 *udt_p");
     UDT1  *a1 = (UDT1 *)memmgr->declare_var("UDT1 bbb");
@@ -625,7 +588,6 @@ TEST_F(MM_write_checkpoint, udt_pointer) {
     *udt1_p = a1;
 
     memmgr->write_checkpoint( ss, "udt_p");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -636,7 +598,7 @@ TEST_F(MM_write_checkpoint, udt_pointer) {
         "// Variable Assignments."
         "udt_p = &bbb;"
         "bbb.x = 3.1415;"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -645,7 +607,6 @@ TEST_F(MM_write_checkpoint, udt_pointer) {
 TEST_F(MM_write_checkpoint, udt_array_no_deps) {
 
     std::stringstream ss;
-    std::string s;
 
     UDT1 *udt_p = (UDT1*)memmgr->declare_var("UDT1 udt_array[3]");
 
@@ -662,7 +623,6 @@ TEST_F(MM_write_checkpoint, udt_array_no_deps) {
     udt_p[2].dbl_p = NULL;
 
     memmgr->write_checkpoint( ss, "udt_array");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -673,7 +633,7 @@ TEST_F(MM_write_checkpoint, udt_array_no_deps) {
         "udt_array[0].x = 3.1415;"
         "udt_array[1].x = 3.1415;"
         "udt_array[2].x = 3.1415;"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -682,7 +642,6 @@ TEST_F(MM_write_checkpoint, udt_array_no_deps) {
 TEST_F(MM_write_checkpoint, udt_array_deps) {
 
     std::stringstream ss;
-    std::string s;
 
     UDT1 *udt_p = (UDT1*)memmgr->declare_var("UDT1 udt_array[3]");
     UDT1 *udt1_p = (UDT1*)memmgr->declare_var("UDT1 udt1");
@@ -705,7 +664,6 @@ TEST_F(MM_write_checkpoint, udt_array_deps) {
     udt_p[2].dbl_p = dbl3_p;
 
     memmgr->write_checkpoint( ss, "udt_array");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
         "// Variable Declarations."
@@ -728,7 +686,7 @@ TEST_F(MM_write_checkpoint, udt_array_deps) {
         "udt_array[2].x = 3.1415;"
         "udt_array[2].udt_p = &udt3.x;"
         "udt_array[2].dbl_p = &dbl3;"
-        , s.c_str());
+        , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -737,7 +695,6 @@ TEST_F(MM_write_checkpoint, udt_array_deps) {
 TEST_F(MM_write_checkpoint, vector_of_named_vars) {
 
     std::stringstream ss;
-    std::string s;
     std::vector<const char*> name_list;
 
     UDT1  *a1 = (UDT1 *)memmgr->declare_var("UDT1 A1");
@@ -761,7 +718,6 @@ TEST_F(MM_write_checkpoint, vector_of_named_vars) {
     name_list.push_back("A2");
 
     memmgr->write_checkpoint( ss, name_list);
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
     "// Variable Declarations."
@@ -782,14 +738,13 @@ TEST_F(MM_write_checkpoint, vector_of_named_vars) {
     "A2.udt_p = &A4.x;"
     "A2.dbl_p = &dbl_2;"
     "dbl_2 = 3.1415;"
-     , s.c_str());
+     , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
 
 TEST_F(MM_write_checkpoint, reference_to_unknown_member) {
     std::stringstream ss;
-    std::string s;
 
     UDT1 *a1 = (UDT1 *)memmgr->declare_var("UDT1 A1");
     UDT2 *a2 = (UDT2 *)memmgr->declare_var("UDT2 A2");
@@ -797,7 +752,6 @@ TEST_F(MM_write_checkpoint, reference_to_unknown_member) {
     a1->dbl_p = &(a2->starStarDbl);
 
     memmgr->write_checkpoint(ss,"A1");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
     "// Variable Declarations."
@@ -807,14 +761,13 @@ TEST_F(MM_write_checkpoint, reference_to_unknown_member) {
     "clear_all_vars();"
     "// Variable Assignments."
     "A1.dbl_p = &A2 + 8;"
-     , s.c_str());
+     , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
 
 TEST_F(MM_write_checkpoint, reference_to_unknown_member_in_array) {
     std::stringstream ss;
-    std::string s;
 
     UDT1 *a1 = (UDT1 *)memmgr->declare_var("UDT1 A1");
     UDT2 *a2 = (UDT2 *)memmgr->declare_var("UDT2 A2[2]");
@@ -822,7 +775,6 @@ TEST_F(MM_write_checkpoint, reference_to_unknown_member_in_array) {
     a1->dbl_p = &(a2[1].starStarDbl);
 
     memmgr->write_checkpoint(ss, "A1");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
     "// Variable Declarations."
@@ -832,14 +784,13 @@ TEST_F(MM_write_checkpoint, reference_to_unknown_member_in_array) {
     "clear_all_vars();"
     "// Variable Assignments."
     "A1.dbl_p = &A2[1] + 8;"
-     , s.c_str());
+     , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
 
 TEST_F(MM_write_checkpoint, 1d_array_of_structures) {
     std::stringstream ss;
-    std::string s;
 
     UDT3 (*a)[3] = (UDT3(*)[3])memmgr->declare_var("UDT3 A[3]");
 
@@ -851,7 +802,6 @@ TEST_F(MM_write_checkpoint, 1d_array_of_structures) {
     (*a)[2].b = 6 ;
 
     memmgr->write_checkpoint(ss, "A");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
     "// Variable Declarations."
@@ -865,14 +815,13 @@ TEST_F(MM_write_checkpoint, 1d_array_of_structures) {
     "A[1].b = 4;"
     "A[2].a = 5;"
     "A[2].b = 6;"
-    , s.c_str());
+    , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
 
 TEST_F(MM_write_checkpoint, 2d_array_of_structures) {
     std::stringstream ss;
-    std::string s;
 
     UDT3 (*a)[2][3] = (UDT3(*)[2][3])memmgr->declare_var("UDT3 A[2][3]");
 
@@ -890,7 +839,6 @@ TEST_F(MM_write_checkpoint, 2d_array_of_structures) {
     (*a)[1][2].b = 12 ;
 
     memmgr->write_checkpoint(ss, "A");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
     "// Variable Declarations."
@@ -910,7 +858,7 @@ TEST_F(MM_write_checkpoint, 2d_array_of_structures) {
     "A[1][1].b = 10;"
     "A[1][2].a = 11;"
     "A[1][2].b = 12;"
-    , s.c_str());
+    , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -918,7 +866,6 @@ TEST_F(MM_write_checkpoint, 2d_array_of_structures) {
 TEST_F(MM_write_checkpoint, io_test ) {
 
     std::stringstream ss;
-    std::string s;
 
     UDT5 *udt5_p = (UDT5*)memmgr->declare_var("UDT5 udt5");
     udt5_p->star_star    = 3.0;
@@ -928,7 +875,6 @@ TEST_F(MM_write_checkpoint, io_test ) {
 
     memmgr->write_checkpoint( ss, "udt5");
     memmgr->write_checkpoint( std::cout, "udt5");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
     "// Variable Declarations."
@@ -938,7 +884,7 @@ TEST_F(MM_write_checkpoint, io_test ) {
     "// Variable Assignments."
     "/*OUTPUT-ONLY: udt5.star_eau = 8;*/"
     "udt5.star_aye_eau = 13;"
-    , s.c_str());
+    , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -951,7 +897,6 @@ TEST_F(MM_write_checkpoint, Compressed_2d_char_arrays ) {
     // it can be written as a quoted string.
 
     std::stringstream ss;
-    std::string s;
 
     UDT6 *udt6_p = (UDT6*)memmgr->declare_var("UDT6 udt6");
 
@@ -968,7 +913,6 @@ TEST_F(MM_write_checkpoint, Compressed_2d_char_arrays ) {
     }
     memmgr->set_expanded_arrays(false);
     memmgr->write_checkpoint( ss, "udt6");
-    s = ss.str();
 
     int result = strcmp_IgnoringWhiteSpace(
     "// Variable Declarations."
@@ -1010,7 +954,7 @@ TEST_F(MM_write_checkpoint, Compressed_2d_char_arrays ) {
     "\"BGI\",\"BGJ\",\"BGK\",\"BGL\",\"BGM\",\"BGN\",\"BGO\",\"BGP\","
     "\"BHA\",\"BHB\",\"BHC\",\"BHD\",\"BHE\",\"BHF\",\"BHG\",\"BHH\","
     "\"BHI\",\"BHJ\",\"BHK\",\"BHL\",\"BHM\",\"BHN\",\"BHO\",\"BHP\" };"
-    , s.c_str());
+    , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 }
@@ -1025,7 +969,6 @@ TEST_F(MM_write_checkpoint, ptr_to_array_of_ptrs_to_objects ) {
     // check-pointed.
 
     std::stringstream ss;
-    std::string s;
 
     // Allocate object with a double ptr member, that is
     // a pointer to an array of pointers to some (3 in this case) objects.
@@ -1048,7 +991,6 @@ TEST_F(MM_write_checkpoint, ptr_to_array_of_ptrs_to_objects ) {
     memmgr->set_expanded_arrays(false);
     // Write the checkpoint.
     memmgr->write_checkpoint( ss, "udt7");
-    s = ss.str();
 
     // Verify it's what we expected.
     int result = strcmp_IgnoringWhiteSpace(
@@ -1072,7 +1014,7 @@ TEST_F(MM_write_checkpoint, ptr_to_array_of_ptrs_to_objects ) {
         "udt3B.b = 5;"
         "udt3C.a = 7;"
         "udt3C.b = 8;"
-    , s.c_str());
+    , ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 
@@ -1086,7 +1028,7 @@ TEST_F(MM_write_checkpoint, ptr_to_array_of_ptrs_to_objects ) {
     pp = (UDT3**)NULL;
 
     // Re-create the objects from a checkpoint.
-    memmgr->read_checkpoint_from_string(s.c_str());
+    memmgr->read_checkpoint_from_string(ss.str().c_str());
 
     EXPECT_EQ(result, 0);
 

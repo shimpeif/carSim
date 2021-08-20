@@ -8,7 +8,6 @@
 
 #include <vector>
 #include <string>
-#include <iostream>
 #include <pthread.h>
 #include "trick/tc.h"
 #include "trick/ThreadBase.hh"
@@ -27,8 +26,6 @@ namespace Trick {
 
         public:
             enum ConnectionType { TCP, UDP, MCAST } ;
-
-            friend std::ostream& operator<< (std::ostream& s, Trick::VariableServerThread& vst);
 
             /**
              @brief Constructor.

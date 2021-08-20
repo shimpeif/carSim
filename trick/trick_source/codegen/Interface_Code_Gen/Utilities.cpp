@@ -14,40 +14,6 @@ std::string sanitize(const std::string& text) {
     return result ;
 }
 
-// Replace special chars for xml output
-std::string & replace_special_chars( std::string & str) {
-
-    // escape &
-    size_t index = 0;
-    while (index != std::string::npos) {
-        index = str.find("&" , index) ;
-        if ( index != std::string::npos ) {
-            str.replace(index, 1, "&amp;") ;
-            index += 5;
-        }
-    }
-
-    // escape "
-    index = 0;
-    while (index != std::string::npos) {
-        index = str.find("\\\"" , index) ;
-        if ( index != std::string::npos ) {
-            str.replace(index, 2, "&quot;") ;
-        }
-    }
-
-    // escape <
-    index = 0;
-    while (index != std::string::npos) {
-        index = str.find("<" , index) ;
-        if ( index != std::string::npos ) {
-            str.replace(index, 1, "&lt;") ;
-        }
-    }
-
-    return str;
-}
-
 // removes leading and trailing whitespace from a string
 std::string trim(const std::string& str, const std::string& whitespace ) {
     size_t strBegin = str.find_first_not_of(whitespace);
@@ -66,11 +32,7 @@ bool isInUserCode( clang::CompilerInstance & ci , clang::SourceLocation sl , Hea
     if ( ! fid.isInvalid() ) {
         const clang::FileEntry * fe = ci.getSourceManager().getFileEntryForID(fid) ;
         if ( fe != NULL ) {
-#if (LIBCLANG_MAJOR < 4) // TODO delete when RHEL 7 no longer supported
             char * resolved_path = almostRealPath( fe->getName() ) ;
-#else
-            char * resolved_path = almostRealPath( fe->getName().str() ) ;
-#endif
             if ( resolved_path != NULL ) {
                 if ( hsd.isPathInUserDir(resolved_path)) {
                     ret = true ;
@@ -88,11 +50,7 @@ bool isInUserOrTrickCode( clang::CompilerInstance & ci , clang::SourceLocation s
     if ( ! fid.isInvalid() ) {
         const clang::FileEntry * fe = ci.getSourceManager().getFileEntryForID(fid) ;
         if ( fe != NULL ) {
-#if (LIBCLANG_MAJOR < 4) // TODO delete when RHEL 7 no longer supported
             char * resolved_path = almostRealPath( fe->getName() ) ;
-#else
-            char * resolved_path = almostRealPath( fe->getName().str() ) ;
-#endif
             if ( resolved_path != NULL ) {
                 if ( hsd.isPathInUserOrTrickDir(resolved_path)) {
                     ret = true ;
@@ -106,23 +64,16 @@ bool isInUserOrTrickCode( clang::CompilerInstance & ci , clang::SourceLocation s
 
 std::string getFileName( clang::CompilerInstance & ci , clang::SourceLocation sl , HeaderSearchDirs & hsd ) {
     clang::FileID fid = ci.getSourceManager().getFileID(sl) ;
-    std::string file_name;
-    char* resolved_path;
     if ( ! fid.isInvalid() ) {
         const clang::FileEntry * fe = ci.getSourceManager().getFileEntryForID(fid) ;
         if ( fe != NULL ) {
-#if (LIBCLANG_MAJOR < 4) // TODO delete when RHEL 7 no longer supported
             char * resolved_path = almostRealPath( fe->getName() ) ;
-#else
-            char * resolved_path = almostRealPath( fe->getName().str() ) ;
-#endif
             if ( resolved_path != NULL  and hsd.isPathInUserDir(resolved_path)) {
-                file_name.append(resolved_path);
+                return std::string(resolved_path) ;
             }
-            free(resolved_path);
         }
     }
-    return file_name;
+    return std::string() ;
 }
 
 #include <iostream>
@@ -162,7 +113,7 @@ char * almostRealPath( const char * in_path ) {
 static const std::string escapeSequence = "[";
 static const std::string defaultForegroundColorSequence = escapeSequence + "39m";
 static const std::string boldSequence = escapeSequence + "1m";
-static const std::string noBoldSequence = escapeSequence + "22m";
+static const std::string noBoldSequence = escapeSequence + "21m";
 static const std::string underlineSequence = escapeSequence + "4m";
 static const std::string noUnderlineSequence = escapeSequence + "24m";
 

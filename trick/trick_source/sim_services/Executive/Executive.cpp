@@ -2,9 +2,6 @@
 #include <iostream>
 #include <math.h>
 #include <sys/stat.h>
-#if __linux
-#include <sys/prctl.h>
-#endif
 
 #include "trick/Executive.hh"
 #include "trick/ExecutiveException.hh"
@@ -51,13 +48,6 @@ Trick::Executive::Executive() {
     software_frame = 1.0;
     frame_count = 0 ;
     stack_trace = true ;
-    /** @li (if on new-enough Linux) allow any process to ptrace this one.
-     *      This allows stack trace / debugger attach when ptrace is
-     *      restricted (e.g. on Ubuntu 16).
-    */
-    #if defined(PR_SET_PTRACER) && defined(PR_SET_PTRACER_ANY)
-    prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY);
-    #endif
     /** @li Assign default terminate time to MAX_LONG_LONG tics. */
     terminate_time = TRICK_MAX_LONG_LONG - 1;
     time_last_pass_tics = 0 ;
@@ -76,7 +66,6 @@ Trick::Executive::Executive() {
     trap_sigfpe = false ;
     trap_sigsegv = false ;
     trap_sigabrt = false ;
-    trap_sigchld = false ;
 
     build_date = std::string("unknown") ;
     current_version = std::string("unknown") ;
@@ -285,10 +274,6 @@ bool Trick::Executive::get_trap_sigabrt() {
     return(trap_sigabrt) ;
 }
 
-bool Trick::Executive::get_trap_sigchld() {
-    return(trap_sigchld) ;
-}
-
 void Trick::Executive::reset_job_cycle_times() {
     unsigned int ii ;
     for ( ii = 0 ; ii < all_jobs_vector.size() ; ii++ ) {
@@ -404,6 +389,3 @@ int Trick::Executive::set_current_version(std::string version) {
     return(0) ;
 }
 
-int Trick::Executive::get_except_return() const {
-    return except_return;
-}

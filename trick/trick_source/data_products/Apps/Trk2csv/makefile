@@ -1,7 +1,7 @@
 
 include ${TRICK_HOME}/share/trick/makefiles/Makefile.common
 
-CXX             = c++
+CC             = c++
 DP_CFLAGS      = -g -I../..
 OBJDIR         = object_${TRICK_HOST_CPU}
 LIBDIR         = ../../lib_${TRICK_HOST_CPU}
@@ -23,15 +23,14 @@ endif
 all: $(ASCII_MAIN)
 
 $(ASCII_MAIN): $(OBJDIR)/trk2ascii.o
-	$(CXX) $(DP_CFLAGS) -o $(ASCII_MAIN) $(OBJDIR)/trk2ascii.o $(DP_LIBS) $(DL_LIB) -lm
+	$(CC) $(DP_CFLAGS) -o $(ASCII_MAIN) $(OBJDIR)/trk2ascii.o $(DP_LIBS) $(DL_LIB) -lm
 
 $(OBJDIR)/trk2ascii.o: trk2ascii.cpp | $(OBJDIR)
-	$(CXX) $(DP_CFLAGS) -c trk2ascii.cpp -o $(OBJDIR)/trk2ascii.o
+	$(CC) $(DP_CFLAGS) -c trk2ascii.cpp -o $(OBJDIR)/trk2ascii.o
 
 clean:
 	rm -f trk2ascii
 	rm -rf $(OBJDIR)
-	rm -rf $(ASCII_MAIN)
 
 real_clean: clean
 

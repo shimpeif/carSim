@@ -5,12 +5,24 @@ PROGRAMMERS:
 *************************************************************/
 
 /* Model Include files */
-#include "msd.hh"
+#include "../include/msd.hh"
+
+/* default data job */
+int msd_default_data(MSD &M) {
+    M = MSD(
+            1.0, /* m */
+            2.0, /* k */
+            0.5, /* b */
+            5.0, /* F */
+            0.0, /* v_0 */
+            5.0  /* x_0 */
+
+    );
+
+    return 0;
+}
 
 /* initialization job */
-int MSD::init() {
-    x = x_0;
-    v = v_0;
-    a = (F - b*v - k*x)/m;
+int msd_init(MSD &M) {
     return 0;
 }

@@ -16,7 +16,6 @@
 #include "trick/map_trick_units_to_udunits.hh"
 
 extern llvm::cl::opt< bool > units_truth_is_scary ;
-extern llvm::cl::opt< int > debug_level ;
 
 static ut_system * get_u_system() {
 
@@ -57,7 +56,6 @@ FieldDescription::FieldDescription(
   is_stl(0) ,
   has_stl_clear(1) ,
   is_static(0) ,
-  is_reference(0) ,
   num_dims(0) ,
   array_sizes() {} ;
 
@@ -87,18 +85,20 @@ std::string FieldDescription::get_regex_field(std::string input , const char * e
     regex_t reg_expr ;
     regmatch_t pmatch[10] ;
     memset(pmatch , 0 , sizeof(pmatch)) ;
-    regcomp( &reg_expr , expr , REG_EXTENDED ) ;
+    ret = regcomp( &reg_expr , expr , REG_EXTENDED ) ;
+    //std::cout << "regcomp ret = " << ret << std::endl ;
     ret = regexec( &reg_expr , input.c_str() , 10 , pmatch , 0 ) ;
+    //std::cout << "regexec ret = " << ret << std::endl ;
     regfree(&reg_expr) ;
     if ( ret == 0 ) {
-        if(debug_level >= 4) std::cout << "pmatch range = " << pmatch[index].rm_so << " " << pmatch[index].rm_eo << std::endl ;
+        //std::cout << "pmatch range = " << pmatch[index].rm_so << " " << pmatch[index].rm_eo << std::endl ;
         if ( pmatch[index].rm_so != -1 ) {
             return input.substr(pmatch[index].rm_so , pmatch[index].rm_eo - pmatch[index].rm_so ) ;
         }
-    } else if (debug_level >= 4){
-        char error_msg[1024] ;
-        regerror( ret , &reg_expr , (char *)error_msg , 1024 ) ;
-        std::cerr << error_msg << std::endl ;
+    } else {
+        //char error_msg[1024] ;
+        //regerror( ret , &reg_expr , (char *)error_msg , 1024 ) ;
+        //std::cerr << error_msg << std::endl ;
     }
     return std::string() ;
 }
@@ -127,49 +127,33 @@ void FieldDescription::parseComment(std::string comment) {
 
     // remove open comment chars
     comment = get_regex_field(comment , "^(//|/\\*)(.*)" , 2) ;
-    if(debug_level >= 4) std::cout << "1. " << comment << std::endl ;
+    //std::cout << "1. " << comment << std::endl ;
 
     // remove optional doxygen comment chars
     // Note: I had to use [ \t\n\r] for \s because the Mac don't understand!
     comment = get_regex_field(comment , "^((\\*|!)<)?[ \t\n\r]*(.*)" , 3) ;
-    if(debug_level >= 4) std::cout << "2. " << comment << std::endl ;
+    //std::cout << "2. " << comment << std::endl ;
 
     // remove optional doxygen keyword
     comment = get_regex_field(comment , "(\\\\[a-zA-Z0-9]+)?[ \t\n\r]*(.*)" , 2) ;
-    if(debug_level >= 4) std::cout << "3. " << comment << std::endl ;
+    //std::cout << "3. " << comment << std::endl ;
 
     ret_str = get_regex_field(comment , "@?trick_chkpnt_io[\\({]([^\\)}]+)[\\)}]" , 1) ;
     if ( ! ret_str.empty()) {
         chkpnt_io = io_map[ret_str] ;
-        if(debug_level >= 4) std::cout << "go for trick_chkpnt_io " <<  io << std::endl ;
+        //std::cout << "go for trick_chkpnt_io " <<  io << std::endl ;
         chkpnt_io_found = true ;
         comment = get_regex_field(comment , "(.*)@?trick_chkpnt_io[\\({]([^\\)}]+)[\\)}]" , 1) +
          get_regex_field(comment , "@?trick_chkpnt_io[\\({]([^\\)}]+)[\\)}](.*)" , 2) ;
-    }
-    ret_str = get_regex_field(comment , "@?cio[\\({]([^\\)}]+)[\\)}]" , 1) ;
-    if ( ! ret_str.empty()) {
-        chkpnt_io = io_map[ret_str] ;
-        if(debug_level >= 4) std::cout << "go for cio " <<  io << std::endl ;
-        chkpnt_io_found = true ;
-        comment = get_regex_field(comment , "(.*)@?cio[\\({]([^\\)}]+)[\\)}]" , 1) +
-         get_regex_field(comment , "@?cio[\\({]([^\\)}]+)[\\)}](.*)" , 2) ;
     }
 
     ret_str = get_regex_field(comment , "@?trick_io[\\({]([^\\)}]+)[\\)}]" , 1) ;
     if ( ! ret_str.empty()) {
         io = io_map[ret_str] ;
-        if(debug_level >= 4) std::cout << "go for trick_io " <<  io << std::endl ;
+        //std::cout << "go for trick_io " <<  io << std::endl ;
         io_found = true ;
         comment = get_regex_field(comment , "(.*)@?trick_io[\\({]([^\\)}]+)[\\)}]" , 1) +
          get_regex_field(comment , "@?trick_io[\\({]([^\\)}]+)[\\)}](.*)" , 2) ;
-    }
-    ret_str = get_regex_field(comment , "@?io[\\({]([^\\)}]+)[\\)}]" , 1) ;
-    if ( ! ret_str.empty()) {
-        io = io_map[ret_str] ;
-        if(debug_level >= 4) std::cout << "go for io " <<  io << std::endl ;
-        io_found = true ;
-        comment = get_regex_field(comment , "(.*)@?io[\\({]([^\\)}]+)[\\)}]" , 1) +
-         get_regex_field(comment , "@?io[\\({]([^\\)}]+)[\\)}](.*)" , 2) ;
     }
 
     /*
@@ -216,28 +200,28 @@ void FieldDescription::parseComment(std::string comment) {
     if ( ! io_found ) {
         // Note: I had to use [ \t\n\r] for \s because the Mac don't understand!
         ret_str = get_regex_field(comment , "^[ \t\n\r]*(\\*io|\\*oi|\\*i|\\*o|\\*\\*)" , 1) ;
-        if(debug_level >= 4) std::cout << "3. " << ret_str << std::endl ;
+        //std::cout << "3. " << ret_str << std::endl ;
         if ( ! ret_str.empty()) {
             io = io_map[ret_str] ;
-            if(debug_level >= 4) std::cout << "stand-alone io " <<  io << std::endl ;
+            //std::cout << "stand-alone io " <<  io << std::endl ;
             io_found = true ;
             comment = get_regex_field(comment , "^[ \t\n\r]*(\\*io|\\*oi|\\*i|\\*o|\\*\\*)[ \t\n\r]*(.*)" , 2) ;
         }
     }
 
-    if(debug_level >= 4) std::cout << "3. " << comment << std::endl ;
+    //std::cout << "3. " << comment << std::endl ;
     if ( ! units_found ) {
         ret_str = get_regex_field(comment , "^[ \t\n\r]*\\(([^\\)]*)\\)" , 1) ;
         if ( ! ret_str.empty()) {
             units = ret_str ;
-            if(debug_level >= 4) std::cout << "stand-alone units " << units << std::endl ;
+            //std::cout << "stand-alone units " << units << std::endl ;
             units_found = true ;
             comment = get_regex_field(comment , "^[ \t\n\r]*\\(([^\\)]*)\\)(.*)" , 2) ;
         } else {
             ret_str = get_regex_field(comment , "^[ \t\n\r]*([^ \t\n\r)]*)" , 1) ;
             if ( ! ret_str.empty()) {
                 units = ret_str ;
-                if(debug_level >= 4) std::cout << "stand-alone units " << units << " " << comment << std::endl ;
+                //std::cout << "stand-alone units " << units << " " << comment << std::endl ;
                 units_found = true ;
                 comment = get_regex_field(comment , "^[ \t\n\r]*([^ \t\n\r)]*)(.*)" , 2) ;
             }
@@ -257,8 +241,10 @@ void FieldDescription::parseComment(std::string comment) {
             // map old unit names to new names
             std::string new_units = map_trick_units_to_udunits(units) ;
             if ( units.compare(new_units) ) {
-                std::cout << bold(color(WARNING, "Warning    ") + file_name + ":" + std::to_string(line_no)) << std::endl
-                    << "           Units converted from " << quote(units) << " to " << quote(new_units) << std::endl;
+                if ( ! units_truth_is_scary ) {
+                    std::cout << bold(color(WARNING, "Warning    ") + file_name + ":" + std::to_string(line_no)) << std::endl
+                        << "           Units converted from " << quote(units) << " to " << quote(new_units) << std::endl;
+                }
                 units = new_units ;
             }
             ut_unit * test_units = ut_parse(u_system, units.c_str() , UT_ASCII) ;
@@ -542,14 +528,6 @@ void FieldDescription::setStatic(bool yes_no) {
 
 bool FieldDescription::isStatic() {
     return is_static ;
-}
-
-void FieldDescription::setReference(bool yes_no) {
-    is_reference = yes_no ;
-}
-
-bool FieldDescription::isReference() {
-    return is_reference ;
 }
 
 unsigned int FieldDescription::getNumDims() {

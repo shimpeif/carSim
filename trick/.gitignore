@@ -9,8 +9,8 @@ lib64
 lib_Linux_*
 lib_Darwin_*
 *.lex.c
-*.tab.cpp
-*.tab.hpp
+*.tab.c
+*.tab.h
 *.swp
 *.dox
 *.pyc
@@ -26,12 +26,3 @@ aclocal.m4
 autom4te.cache
 trick_test
 gmon.out
-*init_log.csv*
-trick_source/web/CivetServer/obj/
-trick-offline
-*sim_services_classes.resource
-civetweb_clone/
-include/civet/
-.vscode/
-civet_server_error.log
-server.pem

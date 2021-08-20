@@ -1,5 +1,5 @@
 dyn_integloop.getIntegrator(trick.Runge_Kutta_4, 4)
-exec(open("Modified_data/realtime.py").read())
+execfile("Modified_data/realtime.py")
 
 dyn.msd.b = 4*(2**(0.5)) - 1/2
 

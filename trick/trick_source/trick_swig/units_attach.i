@@ -51,8 +51,10 @@ PyObject * attach_units(PyObject * in_units_obj , PyObject * in_object) {
                 line_no = PyFrame_GetLineNumber(tstate->frame) ;
 #endif
             }
-            std::cout << "\033[33mUnits converted from [" << in_units << "] to [" << new_units << "] "
-             << file_name << ":" << line_no << "\033[0m" << std::endl ;
+            if ( check_units_conversion_messenger_for_signs_of_life() ) {
+                std::cout << "\033[33mUnits converted from [" << in_units << "] to [" << new_units << "] "
+                 << file_name << ":" << line_no << "\033[0m" << std::endl ;
+            }
             in_units = new_units ;
         }
     }
@@ -71,14 +73,12 @@ PyObject * attach_units(PyObject * in_units_obj , PyObject * in_object) {
         if ( temp_m->units.compare("1") ) {
             ut_unit * from = ut_parse(Trick::UdUnits::get_u_system(), temp_m->units.c_str(), UT_ASCII) ;
             if ( !from ) {
-                std::string temp_str = std::string("could not covert from units "+temp_m->units);
-                PyErr_SetString(PyExc_AttributeError,(temp_str.c_str()));
+                PyErr_SetString(PyExc_AttributeError,(std::string("could not covert from units "+temp_m->units).c_str()));
                 return NULL ;
             }
             ut_unit * to = ut_parse(Trick::UdUnits::get_u_system(), in_units.c_str(), UT_ASCII) ;
             if ( !to ) {
-                std::string temp_str = std::string("could not covert to units " + in_units);
-                PyErr_SetString(PyExc_AttributeError,(temp_str.c_str()));
+                PyErr_SetString(PyExc_AttributeError,(std::string("could not covert to units "+in_units).c_str()));
                 return NULL ;
             }
 
@@ -102,14 +102,12 @@ PyObject * attach_units(PyObject * in_units_obj , PyObject * in_object) {
         if ( temp_m->units.compare("1") ) {
             ut_unit * from = ut_parse(Trick::UdUnits::get_u_system(), temp_m->units.c_str(), UT_ASCII) ;
             if ( !from ) {
-                std::string temp_str = std::string("could not covert from units "+temp_m->units);
-                PyErr_SetString(PyExc_AttributeError,(temp_str.c_str())) ;
+                PyErr_SetString(PyExc_AttributeError,(std::string("could not covert from units "+temp_m->units).c_str()));
                 return NULL ;
             }
             ut_unit * to = ut_parse(Trick::UdUnits::get_u_system(), in_units.c_str(), UT_ASCII) ;
             if ( !to ) {
-                std::string temp_str = std::string("could not covert to units "+in_units);
-                PyErr_SetString(PyExc_AttributeError,(temp_str.c_str()));
+                PyErr_SetString(PyExc_AttributeError,(std::string("could not covert to units "+in_units).c_str()));
                 return NULL ;
             }
 

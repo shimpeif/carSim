@@ -31,9 +31,6 @@ Trick::CommandLineArguments::CommandLineArguments() {
 
     output_dir = std::string(".") ;
     default_dir = std::string(".") ;
-
-    argc = 0;
-    argv = NULL;
 }
 
 int Trick::CommandLineArguments::get_argc() {
@@ -158,28 +155,9 @@ int Trick::CommandLineArguments::process_sim_args(int nargs , char **args) {
 
     if ( argc > 1 ) {
 
-    /* First occurnance of "RUN_*" is the input file name: '<Run_dir>/<file_name>'. 
-       If not found, defaults to first argument */
-        
-        input_file = argv[1];
-        run_dir = argv[1];
-
-        for(int ii = 1; ii < argc; ii++) {
-            if(std::string(argv[ii]).find("RUN_") != std::string::npos) {
-              input_file = argv[ii];
-              run_dir = argv[ii];
-              break;
-            }
-        }
-
-        if (access(input_file.c_str(), F_OK) != 0) {
-          input_file = "";
-            if(strcmp(argv[1], "trick_version") && strcmp(argv[1], "sie") && strcmp(argv[1], "-help")  && strcmp(argv[1], "--help") &&
-                strcmp(argv[1], "-h") && strcmp(argv[1], "help")) {
-                std::cerr << "\nERROR: Invalid input file or command line argument." << std::endl;
-                exit(1);
-            }
-        }
+        /* First argument is the input file name: '<Run_dir>/<file_name>' */
+        input_file = argv[1] ;
+        run_dir = argv[1] ;
 
         found = run_dir.find_last_of("/") ;
         if ( found != std::string::npos ) {
@@ -195,7 +173,7 @@ int Trick::CommandLineArguments::process_sim_args(int nargs , char **args) {
 
         output_dir = run_dir ;
 
-        for (ii = 1; ii < argc; ii++) {
+        for (ii = 2; ii < argc; ii++) {
             if (!strncmp("-OO", argv[ii], (size_t) 3) || !strncmp("-O", argv[ii], (size_t) 2)) {
                 if (ii == ( argc - 1 )) {
                     std::cerr << "\nERROR: No directory specified after -O or -OO argument" << std::endl ;

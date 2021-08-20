@@ -130,6 +130,8 @@ class SysSimObject : public Trick::SimObject {
 
         SysSimObject() {
 
+            {TRK} P0 ("default_data") sched.process_sim_args() ;
+
             {TRK} ("default_data") sched.get_freeze_job(name + ".sched") ;
 
             {TRK} P65534 ("initialization") exec_collect_init() ;
@@ -214,6 +216,8 @@ class CheckPointRestartSimObject : public Trick::SimObject {
             exec_register_scheduler(&cpr) ;
 
             {TRK} P0 ("default_data") cpr.find_write_checkpoint_jobs(name + ".cpr") ;
+
+            {TRK} P0 ("default_data") cpr.load_default_data() ;
             {TRK} P1 ("initialization") cpr.write_pre_init_checkpoint() ;
             {TRK} P65535 ("initialization") cpr.write_post_init_checkpoint() ;
             {TRK} P0 ("system_checkpoint") cpr.write_checkpoint() ;
@@ -237,8 +241,7 @@ class SieSimObject : public Trick::SimObject {
         Trick::Sie sie ;
 
         SieSimObject() {
-            // We now append runtime objects when sie is requested by variable server instead. 
-            // {TRK} P65535 ("initialization") sie.sie_append_runtime_objs() ;
+            {TRK} P0 ("default_data") sie.process_sim_args() ;
         }
 }
 
@@ -377,7 +380,6 @@ class EventManagerSimObject : public Trick::SimObject {
         Trick::EventManager em ;
         Trick::EventProcessor ep ;
         std::vector< ThreadProcessEventSimObject * > thread_process_event_so ; // ** ignore for checkpointing
-        std::vector<char *> thread_process_event_so_names ;
 
         void create_thread_process_event() {
             unsigned int ii ;
@@ -387,10 +389,8 @@ class EventManagerSimObject : public Trick::SimObject {
                 std::ostringstream oss ;
                 oss << "thread_process_event_" << ii ;
                 thread_process_event_so.push_back(tpeso) ;
-                char* tpe_name = strdup(oss.str().c_str()) ;
-                thread_process_event_so_names.push_back(tpe_name) ; 
-                exec_add_sim_object(tpeso, tpe_name) ;
-                TMM_declare_ext_var(tpeso, TRICK_STRUCTURED,"ThreadProcessEventSimObject", 0, tpe_name, 0, NULL) ;
+                exec_add_sim_object(tpeso, oss.str().c_str()) ;
+                TMM_declare_ext_var(tpeso, TRICK_STRUCTURED,"ThreadProcessEventSimObject", 0, oss.str().c_str(), 0, NULL) ;
                 // Add the child thread event processor.
                 em.add_event_processor(&(tpeso->ep)) ;
             }
@@ -417,12 +417,6 @@ class EventManagerSimObject : public Trick::SimObject {
             // get the process_event job and set it in the event processor.
             ep.set_process_event_job(get_job("ep.process_event")) ;
 
-        }
-
-        ~EventManagerSimObject() {
-            for(std::vector<char*>::iterator it = thread_process_event_so_names.begin(); it != thread_process_event_so_names.end(); ++it) {
-                free(*it);
-            }
         }
 }
 
@@ -755,9 +749,7 @@ class InjectorSimObject : public Trick::SimObject {
 
     public:
         Trick::RtiStager  rtis ;
-        std::vector< InjectorExecSimObject * > injector_executor_so ;
-        std::vector<char *> injector_executor_so_names ;
-         // trick_io(**)
+        std::vector< InjectorExecSimObject * > injector_executor_so ; // trick_io(**)
 
         void create_injector_executors() {
             unsigned int ii ;
@@ -767,10 +759,8 @@ class InjectorSimObject : public Trick::SimObject {
                 std::ostringstream oss ;
                 oss << "trick_injector_executor_" << ii ;
                 injector_executor_so.push_back(ieso) ;
-                char* injector_name = strdup(oss.str().c_str()) ;
-                injector_executor_so_names.push_back(injector_name);
-                exec_add_sim_object(ieso, injector_name) ;
-                TMM_declare_ext_var(ieso, TRICK_STRUCTURED,"InjectorExecSimObject", 0, injector_name, 0, NULL) ;
+                exec_add_sim_object(ieso, oss.str().c_str()) ;
+                TMM_declare_ext_var(ieso, TRICK_STRUCTURED,"InjectorExecSimObject", 0, oss.str().c_str(), 0, NULL) ;
                 // Add the child thread realtime injector.
                 rtis.AddInjectorExecutor(&(ieso->rtie)) ;
             }
@@ -778,12 +768,6 @@ class InjectorSimObject : public Trick::SimObject {
 
         InjectorSimObject() {
             {TRK} P0 ("default_data") create_injector_executors() ;
-        }
-
-        ~InjectorSimObject() {
-            for(std::vector<char*>::iterator it = injector_executor_so_names.begin(); it != injector_executor_so_names.end(); ++it) {
-            free(*it);
-    }
         }
 } ;
 

@@ -640,7 +640,7 @@ int Trick::SlaveInfo::restart_dmtcp_slave() {
  * C binded function to toggle the master/slave synchronization flag to on.
  * @return always 0
  */
-extern "C" int ms_master_enable(void) {
+extern "C" int ms_master_enable() {
     the_ms_master->enable() ;
     return(0) ;
 }
@@ -650,7 +650,7 @@ extern "C" int ms_master_enable(void) {
  * C binded function to toggle the master/slave synchronization flag to off.
  * @return always 0
  */
-extern "C" int ms_master_disable(void) {
+extern "C" int ms_master_disable() {
     the_ms_master->disable() ;
     return(0) ;
 }

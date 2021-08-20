@@ -35,38 +35,6 @@ void FindTrickICG::FileChanged(clang::SourceLocation Loc, FileChangeReason Reaso
     }
 }
 
-#if (LIBCLANG_MAJOR < 10) // TODO delete when RHEL 7 no longer supported
-void FindTrickICG::FileSkipped(const clang::FileEntry &SkippedFile,
-                           const clang::Token &FilenameTok,
-                           clang::SrcMgr::CharacteristicKind FileType) {
-    std::string file_name = SkippedFile.getName() ;
-#else
-void FindTrickICG::FileSkipped(const clang::FileEntryRef & SkippedFile, const clang::Token & FilenameTok,
-                        clang::SrcMgr::CharacteristicKind FileType) {
-    /* Files that have header guards are only preprocessed once because of an optimization.
-    We still need to add its include chain to compat15 if TRICK_ICG was found when it was
-    originally preprocessed */
-    std::string file_name = SkippedFile.getName().str() ;
-#endif
-    std::string file_path;
-    {
-        char* path_cstr = almostRealPath(file_name.c_str());
-        if(path_cstr != NULL) {
-            file_path = std::string(path_cstr);
-            free(path_cstr);
-        }
-    }
-
-    // Check if skipped header is in Compat15
-    if(hsd.isPathInCompat15(file_path)) {
-        // for each header in the stack, mark them as being exposed to TRICK_ICG
-        for (std::string& file : included_files) {
-            hsd.addTrickICGFoundFile(file);
-        }
-    }
-}
-
-
 #if (LIBCLANG_MAJOR > 3) || ((LIBCLANG_MAJOR == 3) && (LIBCLANG_MINOR >= 5))
 void FindTrickICG::If(clang::SourceLocation Loc, clang::SourceRange ConditionRange, clang::PPCallbacks::ConditionValueKind ConditionValue)
 #else
@@ -75,9 +43,13 @@ void FindTrickICG::If(clang::SourceLocation Loc, clang::SourceRange ConditionRan
 {
     if ( ConditionRange.isValid() ) {
         // Get the full text of the if statement into a string
-        llvm::StringRef ref = clang::Lexer::getSourceText(clang::CharSourceRange::getCharRange(ConditionRange), ci.getSourceManager(), clang::LangOptions());
+        clang::FullSourceLoc fsl_begin(ConditionRange.getBegin() , ci.getSourceManager()) ;
+        clang::FullSourceLoc fsl_end(ConditionRange.getEnd() , ci.getSourceManager()) ;
+        std::string if_text( fsl_begin.getCharacterData() ,
+         (size_t)(fsl_end.getCharacterData() - fsl_begin.getCharacterData())) ;
+
         // if the if statement contains TRICK_ICG we need to mark it.
-        if ( ref.str().find("TRICK_ICG") != std::string::npos ) {
+        if ( if_text.find("TRICK_ICG") != std::string::npos ) {
             // for each header in the stack, mark them as being exposed to TRICK_ICG
             std::vector<std::string>::iterator it ;
             for ( it = included_files.begin() ; it != included_files.end() ; it++ ) {
@@ -110,7 +82,7 @@ void FindTrickICG::ElIf(clang::SourceLocation Loc, clang::SourceRange ConditionR
     If(Loc,ConditionRange,ConditionValue) ;
 }
 
-#if (LIBCLANG_MAJOR > 3) || ((LIBCLANG_MAJOR == 3) && (LIBCLANG_MINOR >= 7))
+#if (LIBCLANG_MAJOR > 3) || ((LIBCLANG_MAJOR == 3) && (LIBCLANG_MINOR >= 5))
 void FindTrickICG::Ifdef(clang::SourceLocation Loc, const clang::Token &MacroNameTok, const clang::MacroDefinition &MD)
 #else
 void FindTrickICG::Ifdef(clang::SourceLocation Loc, const clang::Token &MacroNameTok, const clang::MacroDirective *MD)
@@ -137,7 +109,7 @@ void FindTrickICG::Ifdef(clang::SourceLocation Loc, const clang::Token &MacroNam
 
 }
 
-#if (LIBCLANG_MAJOR > 3) || ((LIBCLANG_MAJOR == 3) && (LIBCLANG_MINOR >= 7))
+#if (LIBCLANG_MAJOR > 3) || ((LIBCLANG_MAJOR == 3) && (LIBCLANG_MINOR >= 5))
 void FindTrickICG::Ifndef(clang::SourceLocation Loc, const clang::Token &MacroNameTok, const clang::MacroDefinition &MD)
 #else
 void FindTrickICG::Ifndef(clang::SourceLocation Loc, const clang::Token &MacroNameTok, const clang::MacroDirective *MD)

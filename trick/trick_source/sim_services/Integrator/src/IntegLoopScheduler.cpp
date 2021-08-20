@@ -10,13 +10,11 @@
 #include "trick/exec_proto.h"
 #include "trick/message_proto.h"
 #include "trick/message_type.h"
-#include "trick/JobData.hh"
 
 // System includes
 #include <iostream>
 #include <iomanip>
 #include <cstdarg>
-#include <math.h>
 
 
 // Anonymous namespace for local functions
@@ -331,24 +329,22 @@ void Trick::IntegLoopScheduler::call_deriv_jobs ()
  */
 int Trick::IntegLoopScheduler::integrate()
 {
-    double t_end = exec_get_sim_time();
-    double t_start = t_end - next_cycle; // This is the time of the current state vector.
+    double end_time = exec_get_sim_time();
+    double beg_time = end_time - next_cycle;
     int status;
 
     // Call all of the jobs in the pre-integration job queue.
     call_jobs (pre_integ_jobs);
 
     // Integrate sim objects to the current time.
-    status = integrate_dt (t_start, next_cycle);
+    status = integrate_dt (beg_time, next_cycle);
     if (status != 0) {
         return status;
     }
 
     // Process dynamic events, if any.
     if (! dynamic_event_jobs.empty()) {
-
-        status = process_dynamic_events (t_start, t_end);
-
+        status = process_dynamic_events (end_time);
         if (status != 0) {
             return status;
         }
@@ -438,8 +434,10 @@ bool Trick::IntegLoopScheduler::get_last_step_deriv()
 /**
  Integrate over the specified time interval.
  */
-int Trick::IntegLoopScheduler::integrate_dt ( double t_start, double dt) {
-
+int Trick::IntegLoopScheduler::integrate_dt (
+    double beg_time,
+    double dt)
+{
     int ipass = 0;
     int ex_pass = 0;
     bool need_derivs = get_first_step_deriv_from_integrator();
@@ -457,8 +455,8 @@ int Trick::IntegLoopScheduler::integrate_dt ( double t_start, double dt) {
         integ_jobs.reset_curr_index();
         while ((curr_job = integ_jobs.get_next_job()) != NULL) {
 
-
             void* sup_class_data = curr_job->sup_class_data;
+
             // Jobs without supplemental data use the default integrator.
             if (sup_class_data == NULL) {
                 trick_curr_integ = integ_ptr;
@@ -470,7 +468,6 @@ int Trick::IntegLoopScheduler::integrate_dt ( double t_start, double dt) {
                     *(static_cast<Trick::Integrator**>(sup_class_data));
             }
 
-
             if (trick_curr_integ == NULL) {
                 message_publish (
                     MSG_ERROR,
@@ -480,13 +477,13 @@ int Trick::IntegLoopScheduler::integrate_dt ( double t_start, double dt) {
             }
 
             if (ex_pass == 1) {
-                trick_curr_integ->time = t_start;
+                trick_curr_integ->time = beg_time;
                 trick_curr_integ->dt   = dt;
             }
 
             if (verbosity || trick_curr_integ->verbosity) {
                 message_publish (MSG_DEBUG, "Job: %s, time: %f, dt: %f\n",
-                                 curr_job->name.c_str(), t_start, dt);
+                                 curr_job->name.c_str(), beg_time, dt);
             }
 
             ipass = curr_job->call();
@@ -508,55 +505,51 @@ int Trick::IntegLoopScheduler::integrate_dt ( double t_start, double dt) {
     return 0;
 }
 
-int Trick::IntegLoopScheduler::process_dynamic_events ( double t_start, double t_end, unsigned int depth) {
-
+/**
+ Process the dynamic event queue.
+ @param end_time The time the curr_time variable is set and be used for integration time.
+ */
+int Trick::IntegLoopScheduler::process_dynamic_events (double end_time)
+{
     bool fired = false;
-    double t_to = t_end;
-    double t_from = t_start;
+    double end_offset = 1e-15 * nominal_cycle;
+    double curr_time = end_time;
     Trick::JobData * curr_job;
     dynamic_event_jobs.reset_curr_index();
     while ((curr_job = dynamic_event_jobs.get_next_job()) != NULL) {
+
         // Call the dynamic event job to calculate an estimated time-to-go.
         double tgo = curr_job->call_double();
-       if (tgo < 0.0) {   // If there is a root in this interval ...
+
+        // If there is a root in this interval ...
+        if (tgo < end_offset) {
             fired = true;
+
+            // Search for the event.
+            // Dynamic events return 0.0, exactly, to indicate that the
+            // event has been found and has been triggered.
             while (tgo != 0.0) {
-                if (tgo > 0.0) {
-                    t_from = t_to;
-                    t_to = t_to + tgo;
-                    int status = integrate_dt( t_from, (t_to-t_from));
-                    if (status != 0) { return status; }
-                } else {
-#define FORWARD_INTEGRATION 0
-#if FORWARD_INTEGRATION
-                    integ_ptr->state_reset(); // We always want to integrate forward.
-                    t_to = t_to + tgo;
-#else
-                    t_from = t_to;
-                    t_to   = t_from + tgo;
-#endif
-                    int status = integrate_dt( t_from, (t_to-t_from));
-                    if (status != 0) { return status; }
+                // Integrate to the estimated event time.
+                int status = integrate_dt (curr_time, tgo);
+                if (status != 0) {
+                    return status;
                 }
+
+                // Refine the estimate of the time to the event time.
+                end_offset -= tgo;
+                curr_time  += tgo;
                 tgo = curr_job->call_double();
             }
         }
     }
-    /*
-    Integrate to the end of the integration cycle using the updated derivatives.
-    */
+
+    // The last call to the event job should have changed derivatives
+    // in an event-dependent manner. Integrate back to the end of
+    // the integration cycle using the updated derivatives.
     if (fired) {
-        t_from = t_to;
-        t_to = t_end;
-        /*
-        Because the derivatives have likely changed, we need to recursively
-        check for new events in the remaining interval.
-        */
-        int status = integrate_dt( t_from, (t_to-t_from));
-        if (status != 0) { return status; }
-        status = process_dynamic_events(t_from, t_to, depth+1);
-        if (status != 0) { return status; }
-    } else {
+        return integrate_dt (curr_time, end_time-curr_time);
+    }
+    else {
         return 0;
     }
 }

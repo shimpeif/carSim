@@ -23,14 +23,7 @@ DifferentialDriveController::
     leftMotorController(LeftMotorController),
 
     rightMotorSpeedCommand(0.0),
-    leftMotorSpeedCommand(0.0),
-    desiredHeadingRate(0.0),
-
-    // PID Controller Initialization
-    headingctrl(1.0, 0.08, 0.5, headingRateLimit,
-                                  -headingRateLimit, 0.1, 0.1),
-    wheelspeedctrl(1.0, 0.082, 0.5, wheelSpeedLimit,
-                                      -wheelSpeedLimit, 0.1, 0.1)
+    leftMotorSpeedCommand(0.0)
 { }
 
 void DifferentialDriveController::stop() {
@@ -47,8 +40,7 @@ int DifferentialDriveController::update( double distance_err,  // m
     // If the vehicle heading is within 2 degrees of the target, then the
     // heading desired heading rate is proportional to the heading error.
     if ( cos(heading_err) > cos(2.0 * (PI/180.0))) {
-        // PID Controller output for heading
-        desiredHeadingRate = headingctrl.getOutput(headingRateLimit, heading_err);
+        desiredHeadingRate =  heading_err/(2.0*(PI/180.0)) * headingRateLimit;
     } else {
         if (heading_err > 0.0) {
             desiredHeadingRate =  headingRateLimit;
@@ -66,8 +58,7 @@ int DifferentialDriveController::update( double distance_err,  // m
     if (distance_err > slowDownDistance ) {
         wheelSpeedForRangeRate = availableWheelSpeedForRangeRate;
     } else {
-        // PID Controller output for wheelspeed
-        wheelSpeedForRangeRate = wheelspeedctrl.getOutput(availableWheelSpeedForRangeRate, distance_err);
+        wheelSpeedForRangeRate = (distance_err/slowDownDistance) * availableWheelSpeedForRangeRate;
     }
 
     desiredRangeRate = wheelSpeedForRangeRate * wheelRadius;

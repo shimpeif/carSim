@@ -28,7 +28,7 @@ extern "C" int command_line_args_process_sim_args(int argc , char **argv) {
  @relates Trick::CommandLineArguments
  @copydoc Trick::CommandLineArguments::get_argc()
  */
-extern "C" int command_line_args_get_argc(void) {
+extern "C" int command_line_args_get_argc() {
     return(the_cmd_args->get_argc()) ;
 }
 
@@ -36,7 +36,7 @@ extern "C" int command_line_args_get_argc(void) {
  @relates Trick::CommandLineArguments
  @copydoc Trick::CommandLineArguments::get_argv()
  */
-extern "C" char ** command_line_args_get_argv(void) {
+extern "C" char ** command_line_args_get_argv() {
     return(the_cmd_args->get_argv()) ;
 }
 
@@ -45,7 +45,7 @@ const char * empty_string = "" ;
  @relates Trick::CommandLineArguments
  @copydoc Trick::CommandLineArguments::get_output_dir()
  */
-extern "C" const char * command_line_args_get_output_dir(void) {
+extern "C" const char * command_line_args_get_output_dir() {
     return(the_cmd_args->get_output_dir_ref().c_str()) ;
 }
 
@@ -54,7 +54,7 @@ extern "C" const char * command_line_args_get_output_dir(void) {
  @copydoc Trick::CommandLineArguments::get_user_output_dir()
  */
 
-extern "C" const char * command_line_args_get_user_output_dir(void) {
+extern "C" const char * command_line_args_get_user_output_dir() {
     return(the_cmd_args->get_user_output_dir_ref().c_str()) ;
 }
 
@@ -62,7 +62,7 @@ extern "C" const char * command_line_args_get_user_output_dir(void) {
  @relates Trick::CommandLineArguments
  @copydoc Trick::CommandLineArguments::get_input_file()
  */
-extern "C" const char * command_line_args_get_input_file(void) {
+extern "C" const char * command_line_args_get_input_file() {
     return(the_cmd_args->get_input_file_ref().c_str()) ;
 }
 
@@ -70,7 +70,7 @@ extern "C" const char * command_line_args_get_input_file(void) {
  @relates Trick::CommandLineArguments
  @copydoc Trick::CommandLineArguments::get_default_dir()
  */
-extern "C" const char * command_line_args_get_default_dir(void) {
+extern "C" const char * command_line_args_get_default_dir() {
     return(the_cmd_args->get_default_dir_ref().c_str()) ;
 }
 
@@ -78,7 +78,7 @@ extern "C" const char * command_line_args_get_default_dir(void) {
  @relates Trick::CommandLineArguments
  @copydoc Trick::CommandLineArguments::get_cmdline_name()
  */
-extern "C" const char * command_line_args_get_cmdline_name(void) {
+extern "C" const char * command_line_args_get_cmdline_name() {
     return(the_cmd_args->get_cmdline_name_ref().c_str()) ;
 }
 
@@ -86,7 +86,7 @@ extern "C" const char * command_line_args_get_cmdline_name(void) {
  @relates Trick::CommandLineArguments
  @copydoc Trick::CommandLineArguments::output_dir_timestamped_on()
  */
-extern "C" int output_dir_timestamped_on(void) {
+extern "C" int output_dir_timestamped_on() {
     return(the_cmd_args->output_dir_timestamped_on()) ;
 }
 
@@ -94,7 +94,7 @@ extern "C" int output_dir_timestamped_on(void) {
  @relates Trick::CommandLineArguments
  @copydoc Trick::CommandLineArguments::output_dir_timestamped_off()
  */
-extern "C" int output_dir_timestamped_off(void) {
+extern "C" int output_dir_timestamped_off() {
     return(the_cmd_args->output_dir_timestamped_off()) ;
 }
 
@@ -110,7 +110,7 @@ extern "C" void set_output_dir(const char* output_directory) {
  @relates Trick::CommandLineArguments
  @copydoc Trick::CommandLineArguments::get_input_file_ref()
  */
-std::string & command_line_args_get_input_file_ref(void) {
+std::string & command_line_args_get_input_file_ref() {
     return(the_cmd_args->get_input_file_ref()) ;
 }
 

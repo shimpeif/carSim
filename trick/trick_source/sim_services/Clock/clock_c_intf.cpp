@@ -4,11 +4,11 @@
 
 extern Trick::Clock * the_clock ;
 
-extern "C" long long clock_time(void) {
+extern "C" long long clock_time() {
     return the_clock->clock_time() ;
 }
 
-extern "C" long long clock_wall_time(void) {
+extern "C" long long clock_wall_time() {
     return the_clock->wall_clock_time() ;
 }
 
@@ -24,7 +24,7 @@ extern "C" int clock_spin(long long ref) {
     return the_clock->clock_spin(ref) ;
 }
 
-extern "C" double clock_get_rt_clock_ratio(void) {
+extern "C" double clock_get_rt_clock_ratio() {
     return the_clock->get_rt_clock_ratio() ;
 }
 
@@ -32,6 +32,3 @@ extern "C" int clock_set_rt_clock_ratio(double in_clock_ratio) {
     return the_clock->set_rt_clock_ratio(in_clock_ratio) ;
 }
 
-extern "C" unsigned long long clock_tics_per_sec(void) {
-	return the_clock->clock_tics_per_sec;
-}

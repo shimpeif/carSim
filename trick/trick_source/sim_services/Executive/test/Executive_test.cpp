@@ -14,8 +14,6 @@
 #include "trick/SimObject.hh"
 #include "trick/MemoryManager.hh"
 #include "trick/memorymanager_c_intf.h"
-#include "trick/CommandLineArguments.hh"
-#include "trick/GetTimeOfDayClock.hh"
 
 void sig_hand(int sig) ;
 void ctrl_c_hand(int sig) ;
@@ -227,12 +225,10 @@ class ExecutiveTest : public ::testing::Test {
         Trick::MessagePublisher mpublisher ;
         Trick::MessageCout mcout ;
         Trick::MemoryManager mm ;
-        Trick::CommandLineArguments cla ;
-        Trick::GetTimeOfDayClock gtodc ;
         //Trick::RequirementScribe req;
 
 
-        ExecutiveTest() {gtodc.set_global_clock();}
+        ExecutiveTest() {}
         ~ExecutiveTest() {}
         virtual void SetUp() ;
         virtual void TearDown() {}

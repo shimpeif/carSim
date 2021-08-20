@@ -57,12 +57,6 @@ class VehicleOne {
 
     double batteryVoltage;
 
-    // Homing Button Variables
-    // Get input from Trick server client for homing
-    int homeCommanded;
-    // If Wheelbot was homed and end of simulation
-    bool endofHoming;
-
     void add_waypoint(double x, double y);
 
     int default_data();

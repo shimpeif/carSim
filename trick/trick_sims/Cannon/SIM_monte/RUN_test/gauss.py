@@ -1,5 +1,5 @@
 
-exec(open("Modified_data/cannon_aero.dr").read())
+execfile("Modified_data/cannon_aero.dr")
 
 dyn_integloop.getIntegrator(trick.Runge_Kutta_4, 6)
 

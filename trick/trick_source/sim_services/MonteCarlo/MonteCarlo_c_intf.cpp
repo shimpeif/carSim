@@ -12,7 +12,7 @@ extern "C" void mc_set_enabled(int enabled) {
     }
 }
 
-extern "C" int mc_get_enabled(void) {
+extern "C" int mc_get_enabled() {
     if ( the_mc != NULL ) {
         return the_mc->get_enabled();
     }
@@ -25,14 +25,14 @@ extern "C" void mc_set_dry_run(int dry_run) {
     }
 }
 
-extern "C" int mc_get_dry_run(void) {
+extern "C" int mc_get_dry_run() {
     if ( the_mc != NULL ) {
         return the_mc->get_dry_run();
     }
     return 0 ;
 }
 
-extern "C" int mc_is_slave(void) {
+extern "C" int mc_is_slave() {
     if ( the_mc != NULL ) {
         return the_mc->is_slave();
     }
@@ -45,7 +45,7 @@ extern "C" void mc_set_localhost_as_remote(int localhost_as_remote) {
     }
 }
 
-extern "C" int mc_get_localhost_as_remote(void) {
+extern "C" int mc_get_localhost_as_remote() {
     if ( the_mc != NULL ) {
         return the_mc->get_localhost_as_remote();
     }
@@ -58,7 +58,7 @@ extern "C" void mc_set_custom_slave_dispatch(int custom_slave_dispatch) {
     }
 }
 
-extern "C" int mc_get_custom_slave_dispatch(void) {
+extern "C" int mc_get_custom_slave_dispatch() {
     if ( the_mc != NULL ) {
         return the_mc->get_custom_slave_dispatch();
     }
@@ -71,7 +71,7 @@ extern "C" void mc_set_timeout(double timeout) {
     }
 }
 
-extern "C" double mc_get_timeout(void) {
+extern "C" double mc_get_timeout() {
     if ( the_mc != NULL ) {
         return the_mc->get_timeout();
     }
@@ -84,7 +84,7 @@ extern "C" void mc_set_max_tries(unsigned int max_tries) {
     }
 }
 
-extern "C" unsigned int mc_get_max_tries(void) {
+extern "C" unsigned int mc_get_max_tries() {
     if ( the_mc != NULL ) {
         return the_mc->get_max_tries();
     }
@@ -97,9 +97,9 @@ extern "C" void mc_set_user_cmd_string(const char *user_cmd_string) {
     }
 }
 
-extern "C" const char *mc_get_user_cmd_string(void) {
+extern "C" const char *mc_get_user_cmd_string() {
     if ( the_mc != NULL ) {
-        return the_mc->get_user_cmd_string_c_str();
+        return the_mc->get_user_cmd_string().c_str();
     }
     return NULL ;
 }
@@ -110,13 +110,7 @@ extern "C" void mc_set_slave_sim_options(const char *slave_sim_options) {
     }
 }
 
-extern "C" void mc_set_slave_output_directory(const char *slave_output_directory) {
-    if ( the_mc != NULL ) {
-        the_mc->slave_output_directory = std::string(slave_output_directory ? slave_output_directory : "");
-    }
-}
-
-extern "C" const char *mc_get_slave_sim_options(void) {
+extern "C" const char *mc_get_slave_sim_options() {
     if ( the_mc != NULL ) {
         return the_mc->slave_sim_options.c_str();
     }
@@ -129,9 +123,9 @@ extern "C" void mc_set_custom_pre_text(const char *custom_pre_text) {
     }
 }
 
-extern "C" const char *mc_get_custom_pre_text(void) {
+extern "C" const char *mc_get_custom_pre_text() {
     if ( the_mc != NULL ) {
-        return the_mc->get_custom_pre_text_c_str();
+        return the_mc->get_custom_pre_text().c_str();
     }
     return NULL ;
 }
@@ -142,9 +136,9 @@ extern "C" void mc_set_custom_post_text(const char *custom_post_text) {
     }
 }
 
-extern "C" const char *mc_get_custom_post_text(void) {
+extern "C" const char *mc_get_custom_post_text() {
     if ( the_mc != NULL ) {
-        return the_mc->get_custom_post_text_c_str();
+        return the_mc->get_custom_post_text().c_str();
     }
     return NULL ;
 }
@@ -155,7 +149,7 @@ extern "C" void mc_set_verbosity(int verbosity) {
     }
 }
 
-extern "C" int mc_get_verbosity(void) {
+extern "C" int mc_get_verbosity() {
     if ( the_mc != NULL ) {
         return the_mc->get_verbosity();
     }
@@ -168,21 +162,21 @@ extern "C" void mc_set_num_runs(unsigned int num_runs) {
     }
 }
 
-extern "C" unsigned int mc_get_num_runs(void) {
+extern "C" unsigned int mc_get_num_runs() {
     if ( the_mc != NULL ) {
         return the_mc->get_num_runs();
     }
     return 0 ;
 }
 
-extern "C" unsigned int mc_get_num_results(void) {
+extern "C" unsigned int mc_get_num_results() {
     if ( the_mc != NULL ) {
         return the_mc->get_num_results();
     }
     return 0 ;
 }
 
-extern "C" unsigned int mc_get_slave_id(void) {
+extern "C" unsigned int mc_get_slave_id() {
     if ( the_mc != NULL ) {
         return the_mc->get_slave_id();
     }
@@ -225,7 +219,7 @@ extern "C" void mc_read(char *buffer, int size) {
     }
 }
 
-extern "C" unsigned int mc_get_current_run(void) {
+extern "C" unsigned int mc_get_current_run() {
     if ( the_mc != NULL ) {
         return the_mc->get_current_run();
     }
@@ -250,14 +244,14 @@ extern "C" void mc_set_connection_device_port(int port_number) {
     }
 }
 
-extern "C" int mc_get_listen_device_port(void) {
+extern "C" int mc_get_listen_device_port() {
     if ( the_mc != NULL ) {
         return the_mc->get_listen_device_port();
     }
     return -1 ;
 }
 
-extern "C" int mc_get_connection_device_port(void) {
+extern "C" int mc_get_connection_device_port() {
     if ( the_mc != NULL ) {
         return the_mc->get_connection_device_port();
     }

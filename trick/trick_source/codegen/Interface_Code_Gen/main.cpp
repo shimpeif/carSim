@@ -10,7 +10,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include "clang/Basic/Builtins.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/TargetInfo.h"
@@ -30,17 +29,16 @@
 
 /* Command line arguments.  These work better as globals, as suggested in llvm/CommandLine documentation */
 llvm::cl::list<std::string> include_dirs("I", llvm::cl::Prefix, llvm::cl::desc("Include directory"), llvm::cl::value_desc("directory"));
-llvm::cl::list<std::string> f_options("f", llvm::cl::Prefix, llvm::cl::desc("Compiler options that have f prefix"), llvm::cl::value_desc("option"));
-llvm::cl::list<std::string> isystem_dirs("isystem", llvm::cl::Prefix, llvm::cl::desc("Include directory, suppress all warnings"), llvm::cl::value_desc("directory"));
 llvm::cl::list<std::string> defines("D", llvm::cl::Prefix, llvm::cl::desc("Defines"), llvm::cl::value_desc("define"));
-// TODO: remove units_truth_is_scary in 2021.
-llvm::cl::opt<bool> units_truth_is_scary("units-truth-is-scary", llvm::cl::desc("DEPRECATED: Don't print units conversion messages"));
-llvm::cl::opt<bool> sim_services_flag("sim_services", llvm::cl::desc("Gernerate io_src for Trick core headers"));
-llvm::cl::opt<bool> force("force", llvm::cl::desc("Force all io_src files to be generated"));
+llvm::cl::opt<bool> units_truth_is_scary("units-truth-is-scary", llvm::cl::desc("Don't print units conversion messages"));
+llvm::cl::opt<bool> sim_services_flag("s", llvm::cl::desc("Gernerate io_src for Trick core headers"));
+llvm::cl::opt<bool> force("f", llvm::cl::desc("Force all io_src files to be generated"));
 llvm::cl::opt<int> attr_version("v", llvm::cl::desc("Select version of attributes to produce.  10 and 13 are valid"), llvm::cl::init(10));
 llvm::cl::opt<int> debug_level("d", llvm::cl::desc("Set debug level"), llvm::cl::init(0), llvm::cl::ZeroOrMore);
 llvm::cl::opt<bool> create_map("m", llvm::cl::desc("Create map files"), llvm::cl::init(false));
 llvm::cl::opt<std::string> output_dir("o", llvm::cl::desc("Output directory"));
+llvm::cl::alias ssf_alias("sim_services" , llvm::cl::desc("Alias for -s") , llvm::cl::aliasopt(sim_services_flag));
+llvm::cl::alias force_alias("force" , llvm::cl::desc("Alias for -f") , llvm::cl::aliasopt(force));
 llvm::cl::list<std::string> input_file_names(llvm::cl::Positional, llvm::cl::desc("<input_file>"), llvm::cl::ZeroOrMore);
 llvm::cl::list<std::string> sink(llvm::cl::Sink, llvm::cl::ZeroOrMore);
 llvm::cl::list<std::string> pre_compiled_headers("include", llvm::cl::Prefix, llvm::cl::desc("pre-compiled headers"), llvm::cl::value_desc("pre_compiled_headers"));
@@ -49,7 +47,6 @@ llvm::cl::opt<bool> global_compat15("c", llvm::cl::desc("Print the offsetof calc
 llvm::cl::opt<llvm::cl::boolOrDefault> print_trick_icg("print-TRICK-ICG", llvm::cl::desc("Print warnings where TRICK_ICG may cause io_src inconsistencies")) ;
 llvm::cl::alias compat15_alias ("compat15" , llvm::cl::desc("Alias for -c") , llvm::cl::aliasopt(global_compat15)) ;
 llvm::cl::opt<bool> m32("m32", llvm::cl::desc("Generate io code for use with 32bit mode"), llvm::cl::init(false), llvm::cl::ZeroOrMore) ;
-
 
 /**
 Most of the main program is pieced together from examples on the web. We are doing the following:
@@ -74,18 +71,12 @@ int main(int argc, char * argv[]) {
     /**
      * Gather all of the command line arguments into lists of include directories, defines, and input files.
      * All other arguments will be ignored.
-     *
-     * Filter out -W because of LLVM cl option that has been enabled and cannot be disabled in LLVM 10 when linking libclang-cpp.so.
-     * TODO: Troubleshoot or contact LLVM for a fix.  
      */
-    std::vector<const char *> filtered_args;
-    for ( unsigned int ii = 0;  ii < argc ; ii++ ) {
-        if( strncmp(argv[ii], "-W", 2) ) {
-            filtered_args.push_back(argv[ii]);
-        }
-    }
-    
-    llvm::cl::ParseCommandLineOptions(filtered_args.size(), filtered_args.data());
+    llvm::cl::ParseCommandLineOptions(argc, argv);
+
+    /*if (!validAttributesVersion(attr_version)) {
+        return -1;
+    }*/
 
     if (input_file_names.empty()) {
         std::cerr << "No header file specified" << std::endl;
@@ -105,13 +96,7 @@ int main(int argc, char * argv[]) {
     ci.getLangOpts().WChar = true ;
     ci.getLangOpts().CPlusPlus = true ;
     ci.getLangOpts().CPlusPlus11 = true ;
-#if (LIBCLANG_MAJOR >= 6)
-    ci.getLangOpts().CPlusPlus14 = true ;
-#endif
     ci.getLangOpts().CXXOperatorNames = true ;
-#if (LIBCLANG_MAJOR >= 6)
-    ci.getLangOpts().DoubleSquareBracketAttributes = true ;
-#endif
 
     // Create all of the necessary managers.
     ci.createFileManager();
@@ -148,26 +133,19 @@ int main(int argc, char * argv[]) {
     // Set all of the defaults to c++
 #if (LIBCLANG_MAJOR > 3) || ((LIBCLANG_MAJOR == 3) && (LIBCLANG_MINOR >= 9))
     llvm::Triple trip (to.Triple) ;
-#if (LIBCLANG_MAJOR >= 12)
-    clang::CompilerInvocation::setLangDefaults(ci.getLangOpts(), clang::Language::CXX, trip, ppo.Includes) ;
-#elif (LIBCLANG_MAJOR >= 10)
-    clang::CompilerInvocation::setLangDefaults(ci.getLangOpts(), clang::Language::CXX, trip, ppo) ;
-#elif (LIBCLANG_MAJOR >= 5)
+#if (LIBCLANG_MAJOR >= 5)
     clang::CompilerInvocation::setLangDefaults(ci.getLangOpts(), clang::InputKind::CXX, trip, ppo) ;
 #else
     clang::CompilerInvocation::setLangDefaults(ci.getLangOpts(), clang::IK_CXX, trip, ppo) ;
 #endif
     // setting the language defaults clears the c++11 flag.
     ci.getLangOpts().CPlusPlus11 = true ;
-#if (LIBCLANG_MAJOR >= 6)
-    ci.getLangOpts().CPlusPlus14 = true ;
-#endif
 #endif
     clang::Preprocessor& pp = ci.getPreprocessor();
 
     // Add all of the include directories to the preprocessor
     HeaderSearchDirs hsd(ci.getPreprocessor().getHeaderSearchInfo(), ci.getHeaderSearchOpts(), pp, sim_services_flag);
-    hsd.addSearchDirs(include_dirs, isystem_dirs);
+    hsd.addSearchDirs(include_dirs);
 
     // Add a preprocessor callback to search for TRICK_ICG
 #if (LIBCLANG_MAJOR > 3) || ((LIBCLANG_MAJOR == 3) && (LIBCLANG_MINOR >= 6))
@@ -209,7 +187,7 @@ int main(int argc, char * argv[]) {
     ci.createSema(clang::TU_Prefix, NULL);
 
     // Get the full path of the file to be read
-    char buffer[input_file_names[0].size() + 1];
+    char buffer[input_file_names[0].size()];
     strcpy(buffer, input_file_names[0].c_str());
     std::string path(dirname(buffer));
     path += "/";
@@ -223,11 +201,7 @@ int main(int argc, char * argv[]) {
         exit(-1);
     }
     // Open up the input file and parse it
-#if (LIBCLANG_MAJOR >= 10)
-    const clang::FileEntry* fileEntry = ci.getFileManager().getFile(inputFilePath).get();
-#else
     const clang::FileEntry* fileEntry = ci.getFileManager().getFile(inputFilePath);
-#endif
     free(inputFilePath);
 #if (LIBCLANG_MAJOR > 3) || ((LIBCLANG_MAJOR == 3) && (LIBCLANG_MINOR >= 5))
     ci.getSourceManager().setMainFileID(ci.getSourceManager().createFileID(fileEntry, clang::SourceLocation(), clang::SrcMgr::C_User));

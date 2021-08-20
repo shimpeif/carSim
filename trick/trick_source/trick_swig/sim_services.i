@@ -36,9 +36,10 @@
 #include "trick/rand_generator.h"
 #include "trick/wave_form.h"
 #include "trick/integrator_c_intf.h"
-#include "trick/units_conv.h"
 
 #include "trick/GetTimeOfDayClock.hh"
+#include "trick/BC635Clock.hh"
+#include "trick/TPROCTEClock.hh"
 #include "trick/clock_proto.h"
 #include "trick/CommandLineArguments.hh"
 #include "trick/command_line_protos.h"
@@ -60,7 +61,6 @@
 #include "trick/Environment.hh"
 #include "trick/env_proto.h"
 #include "trick/Executive.hh"
-#include "trick/ExecutiveException.hh"
 #include "trick/exec_proto.h"
 #include "trick/exec_proto.hh"
 #include "trick/MalfunctionsTrickView.hh"
@@ -134,7 +134,6 @@
 #include "trick/RtiExec.hh"
 #include "trick/RtiStager.hh"
 #include "trick/ITimer.hh"
-#include "trick/Unit.hh"
 #include "trick/UnitTest.hh"
 #include "trick/trick_tests.h"
 #include "trick/VariableServer.hh"
@@ -142,14 +141,13 @@
 #include "trick/vval.h"
 #include "trick/Flag.h"
 #include "trick/UdUnits.hh"
-#include "trick/MyCivetServer.hh"
 
 #ifdef USE_ER7_UTILS_INTEGRATORS
 #include "er7_utils/integration/core/include/integrator_constructor_factory.hh"
 #include "er7_utils/integration/core/include/integrable_object.hh"
 #include "er7_utils/integration/core/include/base_integration_group.hh"
-#include "er7_utils/trick/integration/include/trick_first_order_ode_integrator.hh"
-#include "er7_utils/trick/integration/include/trick_second_order_ode_integrator.hh"
+#include "er7_utils/trick/integration/include/first_order_ode_integrator.hh"
+#include "er7_utils/trick/integration/include/second_order_ode_integrator.hh"
 #endif
 
 %}

@@ -272,22 +272,22 @@ size_t ncs_to_wcs(const char *ncs, wchar_t * wcs, size_t w_max_size)
     }
 }
 #else
-int wcs_to_ncs_len(void)
+int wcs_to_ncs_len()
 {
     return (0);
 }
 
-int ncs_to_wcs_len(void)
+int ncs_to_wcs_len()
 {
     return (0);
 }
 
-int wcs_to_ncs(void)
+int wcs_to_ncs()
 {
     return (0);
 }
 
-int ncs_to_wcs(void)
+int ncs_to_wcs()
 {
     return (0);
 }

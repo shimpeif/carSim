@@ -7,7 +7,7 @@
 #include "trick/MemoryManager.hh"
 #include "trick/ClassicCheckPointAgent.hh"
 
-int Trick::MemoryManager::read_checkpoint( std::istream *is, bool do_restore_stls /* default is false */) {
+int Trick::MemoryManager::read_checkpoint( std::istream *is) {
 
     ALLOC_INFO_MAP::iterator pos;
     ALLOC_INFO* alloc_info;
@@ -22,10 +22,8 @@ int Trick::MemoryManager::read_checkpoint( std::istream *is, bool do_restore_stl
     }
 
     // Search for stls and restore them
-    if(do_restore_stls) {
-        for ( pos=alloc_info_map.begin() ; pos!=alloc_info_map.end() ; pos++ ) {
-            restore_stls(pos->second) ;
-        }
+    for ( pos=alloc_info_map.begin() ; pos!=alloc_info_map.end() ; pos++ ) {
+        restore_stls(pos->second) ;
     }
 
     // Go through all of the allocations that have been created looking
@@ -62,11 +60,12 @@ int Trick::MemoryManager::read_checkpoint(const char* filename ) {
 
     // Create a stream from the named file.
     std::ifstream infile(filename , std::ios::in);
+
     if (infile.is_open()) {
-        return ( read_checkpoint( &infile, true )) ;
+        return ( read_checkpoint( &infile ));
     } else {
         std::stringstream message;
-        message << "Couldn't open \"" << filename << "\"." ;
+        message << "Couldn't open \"" << filename << "\".";
         emitError(message.str());
     }
     return 1;

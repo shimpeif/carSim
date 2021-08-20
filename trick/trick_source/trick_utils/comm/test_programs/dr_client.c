@@ -34,7 +34,9 @@ void dump_data (  DataFiles* df,
 int main( int narg, char** args ) {
 
   DataFiles df ;
+  DataFiles headers ;
   TCDevice connection ;
+  int isAsciiData ;
   int ret ;
   char* file_name ;
   char* msg ;

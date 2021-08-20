@@ -43,12 +43,12 @@ bool FieldVisitor::VisitType(clang::Type *t) {
         std::cout << "FieldVisitor VisitType Type = " << t->getTypeClassName() << std::endl ;
         t->dump() ;
     }
+    // If this type is a reference, set IO to 0
     if ( t->isReferenceType() ) {
         if ( debug_level >= 3 ) {
-            std::cout << "FieldVisitor VisitType found reference, setIO = 3 " << std::endl ;
+            std::cout << "FieldVisitor VisitType found reference, setIO = 0 " << std::endl ;
         }
-        fdes->setIO(3) ;
-        fdes->setReference(true) ;
+        fdes->setIO(0) ;
     }
     return true;
 }
@@ -228,8 +228,7 @@ bool FieldVisitor::VisitFieldDecl( clang::FieldDecl *field ) {
         std::cout << "FieldVisitor VisitFieldDecl" << std::endl ;
         std::cout << "    is_bitfield = " << fdes->isBitField() << std::endl ;
         std::cout << "    is_canonical = " << qt.isCanonical() << std::endl ;
-        // isHidden() removed in clang 11.0
-        //std::cout << "    is_hidden = " << field->isHidden() << std::endl ;
+        std::cout << "    is_hidden = " << field->isHidden() << std::endl ;
         //field->dump() ;
     }
 
@@ -238,6 +237,7 @@ bool FieldVisitor::VisitFieldDecl( clang::FieldDecl *field ) {
     if ( !qt.isCanonical() ) {
         fdes->setNonCanonicalTypeName(qt.getAsString()) ;
         clang::QualType ct = qt.getCanonicalType() ;
+        std::string tst_string = ct.getAsString() ;
         if ( debug_level >= 3 ) {
             std::cout << "\033[33mFieldVisitor VisitFieldDecl: Processing canonical type\033[00m" << std::endl ;
             ct.dump() ;
@@ -270,6 +270,8 @@ bool FieldVisitor::ProcessTemplate(std::string in_name , clang::CXXRecordDecl * 
         fdes->setIO(0) ;
         return false ;
     }
+
+    size_t pos ;
 
     // Check to see if we've processed this template before
     // If not we need to create attributes for this template

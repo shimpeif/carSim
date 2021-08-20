@@ -5,7 +5,6 @@
 #define DIFFERENTIAL_DRIVE_CONTROLER_HH
 
 #include "Motor/include/motorSpeedController.hh"
-#include "Control/include/PIDController.hh"
 
 class DifferentialDriveController {
 
@@ -41,9 +40,5 @@ class DifferentialDriveController {
         double leftMotorSpeedCommand;
         double desiredHeadingRate;
         double desiredRangeRate;
-
-        // PID Controller
-        PIDController headingctrl;
-        PIDController wheelspeedctrl;
 };
 #endif

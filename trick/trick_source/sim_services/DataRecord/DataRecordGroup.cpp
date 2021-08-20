@@ -73,7 +73,6 @@ Trick::DataRecordGroup::DataRecordGroup( std::string in_name ) :
  writer_num(0),
  max_file_size(1<<30), // 1 GB
  total_bytes_written(0),
- max_size_warning(false),
  writer_buff(NULL),
  single_prec_only(false),
  buffer_type(DR_Buffer),
@@ -287,18 +286,15 @@ void Trick::DataRecordGroup::remove_variable( std::string in_name ) {
 
 void Trick::DataRecordGroup::remove_all_variables() {
     // remove all but the first variable, which is sim time
-    if(!rec_buffer.empty()) {
-        for (auto i = rec_buffer.begin() + 1; i != rec_buffer.end(); ++i) {
-            delete *i;
-        }
-        rec_buffer.erase(rec_buffer.begin() + 1, rec_buffer.end());
+    for (auto i = rec_buffer.begin() + 1; i != rec_buffer.end(); ++i) {
+        delete *i;
     }
+    rec_buffer.erase(rec_buffer.begin() + 1, rec_buffer.end());
 
     // remove everything
     for (auto variable : change_buffer) {
         delete variable;
     }
-
     change_buffer.clear();
 }
 
@@ -324,7 +320,7 @@ int Trick::DataRecordGroup::add_change_variable( std::string in_name ) {
 
     REF2 * ref2 ;
 
-    ref2 = ref_attributes(in_name.c_str()) ;
+    ref2 = ref_attributes((char *)in_name.c_str()) ;
 
     if ( ref2 == NULL || ref2->attr == NULL ) {
         message_publish(MSG_WARNING, "Could not find Data Record change variable %s.\n", in_name.c_str()) ;
@@ -367,7 +363,6 @@ int Trick::DataRecordGroup::init() {
 
     // Allocate recording space for time.
     rec_buffer[0]->buffer = (char *)calloc(max_num , rec_buffer[0]->ref->attr->size) ;
-    rec_buffer[0]->last_value = (char *)calloc(1 , rec_buffer[0]->ref->attr->size) ;
 
     /* Loop through all variables looking up names.  Allocate recording space
        according to size of the variable */
@@ -376,7 +371,7 @@ int Trick::DataRecordGroup::init() {
         if ( drb->ref_searched == false ) {
             REF2 * ref2 ;
 
-            ref2 = ref_attributes(drb->name.c_str()) ;
+            ref2 = ref_attributes((char *)drb->name.c_str()) ;
             if ( ref2 == NULL || ref2->attr == NULL ) {
                 message_publish(MSG_WARNING, "Could not find Data Record variable %s.\n", drb->name.c_str()) ;
                 rec_buffer.erase(rec_buffer.begin() + jj--) ;
@@ -394,7 +389,7 @@ int Trick::DataRecordGroup::init() {
         drb->ref_searched = true ;
     }
 
-    write_header() ;
+    ret = write_header() ;
 
     // call format specific initialization to open destination and write header
     ret = format_specific_init() ;
@@ -450,35 +445,10 @@ int Trick::DataRecordGroup::checkpoint() {
 }
 
 void Trick::DataRecordGroup::clear_checkpoint_vars() {
-    
-    if ( variable_names ) {
-        for(int jj = 0; jj < num_variable_names; jj++) {
-            TMM_delete_var_a(variable_names[jj]);
-        }
-        TMM_delete_var_a(variable_names) ;
-    }
-
-    if ( variable_alias ) {
-        for(int jj = 0; jj < num_variable_names; jj++) {
-            TMM_delete_var_a(variable_alias[jj]);
-        }
-        TMM_delete_var_a(variable_alias) ;
-    }
-
-    if ( change_variable_names ) {
-        for(int jj = 0; jj < num_change_variable_names; jj++) {
-            TMM_delete_var_a(change_variable_names[jj]);
-        }
-        TMM_delete_var_a(change_variable_names) ;
-    }
-
-    if ( change_variable_alias ) {
-        for(int jj = 0; jj < num_change_variable_names; jj++) {
-            TMM_delete_var_a(change_variable_alias[jj]);
-        }
-        TMM_delete_var_a(change_variable_alias) ;
-    }
-
+    if ( variable_names ) TMM_delete_var_a(variable_names) ;
+    if ( variable_alias ) TMM_delete_var_a(variable_alias) ;
+    if ( change_variable_names ) TMM_delete_var_a(change_variable_names) ;
+    if ( change_variable_alias ) TMM_delete_var_a(change_variable_alias) ;
     variable_names = NULL ;
     variable_alias = NULL ;
     change_variable_names = NULL ;
@@ -598,10 +568,6 @@ int Trick::DataRecordGroup::data_record(double in_time) {
         if ( freq != DR_Always ) {
             for (jj = 0; jj < change_buffer.size() ; jj++) {
                 drb = change_buffer[jj] ;
-                REF2 * ref = drb->ref ;
-                if ( ref->pointer_present == 1 ) {
-                    ref->address = follow_address_path(ref) ;
-                }
                 if ( memcmp( drb->buffer , drb->ref->address , drb->ref->attr->size) ) {
                     change_detected = true ;
                     memcpy( drb->buffer , drb->ref->address , drb->ref->attr->size) ;
@@ -627,30 +593,7 @@ int Trick::DataRecordGroup::data_record(double in_time) {
                 *((double *)(rec_buffer[0]->last_value)) = in_time ;
                 for (jj = 0; jj < rec_buffer.size() ; jj++) {
                     drb = rec_buffer[jj] ;
-                    REF2 * ref = drb->ref ;
-                    int param_size = ref->attr->size ;
-                    if ( buffer_offset == 0 ) {
-                       drb->curr_buffer = drb->buffer ;
-                    } else {
-                       drb->curr_buffer += param_size ;
-                    }
-                    switch ( param_size ) {
-                        case 8:
-                            *(int64_t *)drb->curr_buffer = *(int64_t *)drb->last_value ;
-                            break ;
-                        case 4:
-                            *(int32_t *)drb->curr_buffer = *(int32_t *)drb->last_value ;
-                            break ;
-                        case 2:
-                            *(int16_t *)drb->curr_buffer = *(int16_t *)drb->last_value ;
-                            break ;
-                        case 1:
-                            *(int8_t *)drb->curr_buffer = *(int8_t *)drb->last_value ;
-                            break ;
-                        default:
-                            memcpy( drb->curr_buffer , drb->last_value , param_size ) ;
-                            break ;
-                    }
+                    memcpy( drb->buffer + (buffer_offset * drb->ref->attr->size) , drb->last_value , drb->ref->attr->size ) ;
                 }
                 buffer_num++ ;
             }
@@ -722,14 +665,6 @@ int Trick::DataRecordGroup::write_data(bool must_write) {
             writer_num++ ;
 
         }
-
-        if(!max_size_warning && (total_bytes_written > max_file_size)) {
-            std::cerr << "WARNING: Data record max file size " << (static_cast<double>(max_file_size))/(1<<20) << "MB reached.\n"
-            "https://nasa.github.io/trick/documentation/simulation_capabilities/Data-Record#changing-the-max-file-size-of-a-data-record-group-ascii-and-binary-only" 
-            << std::endl;
-            max_size_warning = true;
-        }
-
         pthread_mutex_unlock(&buffer_mutex) ;
 
     }
@@ -757,10 +692,8 @@ int Trick::DataRecordGroup::shutdown() {
     remove_all_variables();
 
     // remove_all_variables does not remove sim time
-    if(!rec_buffer.empty()){
-        delete rec_buffer[0];
-        rec_buffer.clear();
-    }
+    delete rec_buffer[0];
+    rec_buffer.clear();
 
     if ( writer_buff ) {
         free(writer_buff) ;
