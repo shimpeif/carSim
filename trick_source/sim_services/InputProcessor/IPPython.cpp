@@ -21,7 +21,6 @@
 #include "trick/MemoryManager.hh"
 #include "trick/exec_proto.hh"
 #include "trick/exec_proto.h"
-#include "trick/message_proto.h"
 
 Trick::IPPython * the_pip ;
 
@@ -72,9 +71,7 @@ bool Trick::IPPython::get_units_conversion_msgs() {
 }
 
 void Trick::IPPython::shoot_the_units_conversion_messenger(bool onoff) {
-    if ( onoff ) {
-        message_publish(MSG_WARNING, "Units conversion messages can no longer be suppressed.\n") ;
-    }
+    units_conversion_msgs = !onoff ;
 }
 
 //Initialize and run the Python input processor on the user input file.
@@ -82,6 +79,8 @@ int Trick::IPPython::init() {
     /** @par Detailed Design: */
 
     FILE *input_fp ;
+    std::string shortcut ;
+    std::string verify_command ;
     int ret ;
     std::string error_message ;
     pthread_mutexattr_t m_attr ;
@@ -110,7 +109,7 @@ int Trick::IPPython::init() {
      "import os\n"
      "import struct\n"
      "import binascii\n"
-     "sys.path.append(os.getcwd() + '/trick.zip')\n"
+     "sys.path.append(os.getcwd())\n"
      "sys.path.append(os.path.join(os.environ['TRICK_HOME'], 'share/trick/pymods'))\n"
      "sys.path += map(str.strip, os.environ['TRICK_PYTHON_PATH'].split(':'))\n"
      "import trick\n"
@@ -132,7 +131,7 @@ int Trick::IPPython::init() {
 
     /* Read and parse the input file. */
     if ( verify_input ) {
-        PyRun_SimpleString("sys.settrace(trick.traceit)") ;
+        ret = PyRun_SimpleString("sys.settrace(trick.traceit)") ;
     }
 
     if ( (ret = PyRun_SimpleFile(input_fp, input_file.c_str())) !=  0 ) {
@@ -201,19 +200,14 @@ int Trick::IPPython::shutdown() {
     return(0) ;
 }
 
-//TODO: remove units conversion messenger routines in 2021
 void shoot_the_units_conversion_messenger() {
-    message_publish(MSG_WARNING, "shoot_the_units_conversion_messenger() is deprecated\n") ;
     the_pip->shoot_the_units_conversion_messenger(true) ;
 }
 
 void revive_the_units_conversion_messenger() {
-    message_publish(MSG_WARNING, "revive_the_units_conversion_messenger() is deprecated\n") ;
     the_pip->shoot_the_units_conversion_messenger(false) ;
 }
 
 int check_units_conversion_messenger_for_signs_of_life() {
-    message_publish(MSG_WARNING, "check_units_conversion_messenger_for_signs_of_life() is deprecated\n") ;
     return the_pip->get_units_conversion_msgs() ;
 }
-//END TODO:

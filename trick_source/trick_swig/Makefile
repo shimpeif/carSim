@@ -1,4 +1,4 @@
-TRICK_HOME := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../..)
+
 include ${TRICK_HOME}/share/trick/makefiles/Makefile.common
 
 ifneq ($(HDF5),)
@@ -52,10 +52,6 @@ ifeq ($(USE_ER7_UTILS_CHECKPOINTHELPER), 1)
 SWIG_DEFS += -DUSE_ER7_UTILS_CHECKPOINTHELPER
 endif
 
-ifeq ($(TRICK_CIVET), 1)
-SWIG_DEFS += -DUSE_CIVET
-endif
-
 default: $(SWIG_OBJECT_FILES) $(TRICK_LIB) $(TEST_DIR)
 
 trick: $(SWIG_OBJECT_FILES) $(OBJECT_FILES) $(TEST_DIR)
@@ -74,10 +70,10 @@ swig_${TRICK_HOST_CPU}:
 	mkdir $@
 
 $(SWIG_OBJECT_FILES): $(OBJ_DIR)/%.o : swig_${TRICK_HOST_CPU}/%.cpp
-	$(TRICK_CXX) $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) -c $< -o $@
+	$(TRICK_CPPC) $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) -c $< -o $@
 
 $(OBJECT_FILES): $(OBJ_DIR)/%.o : %.cpp
-	$(TRICK_CXX) $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) -c $< -o $@
+	$(TRICK_CPPC) $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) -c $< -o $@
 
 $(SWIG_SRC_FILES): swig_${TRICK_HOST_CPU}/%_wrap.cpp : %.i
 	 $(SWIG) $(SWIG_DEFS) -I${TRICK_HOME}/trick_source -I${TRICK_HOME}/include -I${TRICK_HOME} -c++ -python -includeall -ignoremissing -w201,362,389,451 -o $@ -outdir ${TRICK_HOME}/share/trick/swig $<

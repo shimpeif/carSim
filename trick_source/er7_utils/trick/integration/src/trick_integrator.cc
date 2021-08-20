@@ -209,7 +209,6 @@ TrickIntegrator::initialize_trick_workspace (
    deriv    = alloc::allocate_array<double*> (buf_size);
    deriv2   = alloc::allocate_array<double*> (buf_size);
    state_ws = alloc::allocate_array<double*> (buf_size);
-
    for (unsigned int ii = 0; ii < buf_size; ++ii) {
       deriv[ii]    = er7_deriv;
       deriv2[ii]   = er7_deriv2;

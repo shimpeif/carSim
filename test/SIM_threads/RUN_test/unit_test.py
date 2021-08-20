@@ -1,5 +1,5 @@
 
-exec(open("RUN_test/overrun.py").read())
+execfile("RUN_test/overrun.py")
 
 # Disable real-time (if applicable)
 trick.real_time_disable()

@@ -17,10 +17,6 @@ VehicleController::VehicleController( std::vector<Point>* wayPoints,
     waypointQueue = wayPoints;
     destination = waypointQueue->begin();
     printDestination();
-
-    // Initialize homing variables
-    endofWaypoints = false;
-    homeCommanded = false;
 }
 
 void VehicleController::setWayPointQueue( std::vector<Point>* wayPoints ) {
@@ -37,12 +33,6 @@ int VehicleController::getCurrentDestination(Point& currentDestination) {
     return 1;
 }
 
-// Commands wheelbot to navigate to home
-void VehicleController::gohome() {
-    destination = waypointQueue->end()-1;
-    homeCommanded = true;
-}
-
 void VehicleController::printDestination() {
     if (destination != waypointQueue->end()) {
         std::cout << "Destination = (" << destination->x << "," << destination->y << ")." << std::endl;
@@ -51,29 +41,22 @@ void VehicleController::printDestination() {
     }
 }
 
-// Returns the value of the variable endofWaypoints
-bool VehicleController::getStatus() {
-    return endofWaypoints;
-}
-
 void VehicleController::update() {
 
-  if (destination == waypointQueue->end() && endofWaypoints == false) {
-      if (homeCommanded == false) {
-          driveController.update(0.0, 0.0);
-      }
-      endofWaypoints = true;
-  } else {
-      double distance_err = navigator.distanceTo(*destination);
-      if ( distance_err > arrivalDistance) {
-          double heading_err = navigator.bearingTo(*destination);
-          driveController.update(distance_err, heading_err);
-      } else {
-          if (endofWaypoints != true) {
+    if (destination == waypointQueue->end()) {
+        driveController.update(0.0, 0.0);
+        driveController.stop();
+    } else {
+        double distance_err = navigator.distanceTo(*destination);
+        if ( distance_err > arrivalDistance) {
+            double heading_err = navigator.bearingTo(*destination);
+            driveController.update(distance_err, heading_err);
+        } else {
             std::cout << "Arrived at Destination." << std::endl;
             destination ++;
             printDestination();
-          }
-      }
-  }
+        }
+    }
 }
+
+

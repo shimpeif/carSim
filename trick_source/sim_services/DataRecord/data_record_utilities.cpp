@@ -12,14 +12,14 @@ PROGRAMMERS:
 
 extern Trick::DataRecordDispatcher * the_drd  ;
 
-extern "C" int dr_remove_files(void) {
+extern "C" int dr_remove_files() {
     if ( the_drd != NULL ) {
         return the_drd->remove_files() ;
     }
     return -1 ;
 }
 
-extern "C" int dr_enable(void) {
+extern "C" int dr_enable() {
     if ( the_drd != NULL ) {
         return the_drd->enable() ;
     }
@@ -33,7 +33,7 @@ extern "C" int dr_enable_group( const char * in_name ) {
     return -1 ;
 }
 
-extern "C" int dr_disable(void) {
+extern "C" int dr_disable() {
     if ( the_drd != NULL ) {
         return the_drd->disable() ;
     }
@@ -68,7 +68,7 @@ extern "C" int remove_data_record_group( Trick::DataRecordGroup * in_group ) {
     return -1 ;
 }
 
-extern "C" void remove_all_data_record_groups(void) {
+extern "C" void remove_all_data_record_groups() {
     the_drd->remove_all_groups() ;
 }
 

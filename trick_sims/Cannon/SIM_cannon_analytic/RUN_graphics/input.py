@@ -1,4 +1,4 @@
-exec(open("Modified_data/realtime.py").read())
+execfile("Modified_data/realtime.py")
 
 #==========================================
 # Start the display VarServer Client

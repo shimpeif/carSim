@@ -3,10 +3,11 @@
 
 #include "trick/reference_frame.h"
 #include "trick/GetTimeOfDayClock.hh"
+#include "trick/BC635Clock.hh"
+#include "trick/TPROCTEClock.hh"
 #include "trick/CommandLineArguments.hh"
 #include "trick/DMTCP.hh"
 #include "trick/Executive.hh"
-#include "trick/ExecutiveException.hh"
 #include "trick/Environment.hh"
 #include "trick/Event.hh"
 #include "trick/EventProcessor.hh"
@@ -34,7 +35,6 @@
 #include "trick/RealtimeSync.hh"
 #include "trick/ITimer.hh"
 #include "trick/VariableServer.hh"
-
 #include "trick/regula_falsi.h"
 #include "trick/Integrator.hh"
 #include "trick/IntegAlgorithms.hh"
@@ -86,20 +86,11 @@
 #include "trick/RtiStager.hh"
 #include "trick/RtiExec.hh"
 #include "trick/UdUnits.hh"
-#include "trick/Unit.hh"
 #include "trick/UnitsMap.hh"
 #include "trick/Zeroconf.hh"
 #include "trick/Flag.h"
 #include "trick/wave_form.h"
 #include "trick/rand_generator.h"
 #include "trick/units_conv.h"
-
-#include "trick/lqueue.h"
-#include "trick/lstack.h"
-
-#ifdef USE_CIVET
-#include "trick/MyCivetServer.hh"
-#include "trick/WebSocketSession.hh"
-#endif
 
 #endif

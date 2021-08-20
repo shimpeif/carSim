@@ -6,8 +6,8 @@
 extern "C" {
 #endif
 
-    int ms_master_enable(void) ;
-    int ms_master_disable(void) ;
+    int ms_master_enable() ;
+    int ms_master_disable() ;
 
 #ifdef __cplusplus
 }

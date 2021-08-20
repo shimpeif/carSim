@@ -60,6 +60,7 @@ int Trick::DebugPause::debug_signal() {
 
 int Trick::DebugPause::debug_pause_on() {
 
+    std::map<std::string , Trick::JobData *>::iterator it ;
     std::stringstream sem_name_stream ;
 
     if ( debug_pause_flag == true ) {

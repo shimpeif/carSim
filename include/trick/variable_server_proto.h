@@ -6,17 +6,16 @@
 extern "C" {
 #endif
 
-void var_server_list_connections(void);
-const char * var_server_get_hostname(void) ;
+const char * var_server_get_hostname() ;
 
-unsigned short var_server_get_port(void) ;
+unsigned short var_server_get_port() ;
 void var_server_set_port(unsigned short port) ;
 void var_server_set_source_address(const char * address) ;
 
-const char * var_server_get_user_tag(void) ;
+const char * var_server_get_user_tag() ;
 void var_server_set_user_tag(const char * tag) ;
 
-int var_server_get_enabled(void) ;
+int var_server_get_enabled() ;
 void var_server_set_enabled(int on_off) ;
 
 int var_server_create_tcp_socket(const char * address, unsigned short port) ;

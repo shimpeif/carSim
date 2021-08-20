@@ -70,7 +70,6 @@ bool EnumVisitor::VisitEnumType(clang::EnumType *et) {
 bool EnumVisitor::VisitEnumConstantDecl(clang::EnumConstantDecl *ecd) {
     //std::cout << ecd->getName().str() << " = " << ecd->getInitVal().getSExtValue() << std::endl ;
     eval.addEnum(ecd->getName().str() , ecd->getInitVal().getSExtValue()) ;
-    eval.addFullyQualifiedEnum(ecd->getQualifiedNameAsString(), ecd->getInitVal().getSExtValue());
     return true ;
 }
 

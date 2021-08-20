@@ -19,9 +19,7 @@
 #include "trick/vval.h"
 #include "trick/value.h"
 #include "trick/var.h"
-#include "ref_parser.tab.hpp"
-
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "ref_parser.tab.h"
 
     using namespace std;
 

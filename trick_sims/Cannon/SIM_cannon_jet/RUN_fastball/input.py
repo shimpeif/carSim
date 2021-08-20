@@ -1,4 +1,4 @@
-exec(open("Modified_data/cannon_aero.dr").read())
+execfile("Modified_data/cannon_aero.dr")
 
 dyn.baseball.pos[0] = 16.0
 dyn.baseball.pos[1] = 0.1

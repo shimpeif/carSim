@@ -370,7 +370,7 @@ namespace Trick {
              Restore a checkpoint from the given stream.
              @param in_s - input stream.
              */
-            int read_checkpoint( std::istream* in_s, bool do_restore_stls=false);
+            int read_checkpoint( std::istream* in_s);
 
             /**
              Read a checkpoint from the file of the given name.
@@ -657,9 +657,6 @@ namespace Trick {
             static void emitMessage( std::string s);
             static void emitError( std::string s);
             static void emitWarning( std::string s);
-
-            void write_JSON_alloc_info( std::ostream& s, ALLOC_INFO *alloc_info) ;
-            void write_JSON_alloc_list( std::ostream& s, int start_ix, int num) ;
 
         private:
 

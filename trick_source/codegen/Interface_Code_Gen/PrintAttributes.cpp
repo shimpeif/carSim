@@ -15,12 +15,10 @@
 #include "PrintAttributes.hh"
 #include "PrintFileContentsBase.hh"
 #include "PrintFileContents10.hh"
-#include "FieldDescription.hh"
 #include "HeaderSearchDirs.hh"
 #include "CommentSaver.hh"
 #include "ClassValues.hh"
 #include "EnumValues.hh"
-#include "Utilities.hh"
 
 PrintAttributes::PrintAttributes(int in_attr_version , HeaderSearchDirs & in_hsd ,
   CommentSaver & in_cs , clang::CompilerInstance & in_ci, bool in_force , bool in_sim_services_flag ,
@@ -112,6 +110,27 @@ static void _mkdir(const char *dir) {
             return ;
         }
     }
+}
+
+// this is a subset of tests on the header file to determine if this file is not excluded for any reason.
+bool PrintAttributes::isFileIncluded(std::string header_file_name) {
+    // several tests require the real path of the header file.
+    char * realPath = almostRealPath(header_file_name.c_str()) ;
+
+    if ( realPath != NULL ) {
+        // Only include user directories (not system dirs like /usr/include)
+        if ( hsd.isPathInUserDir(realPath) ) {
+            // Don't process files in excluded directories
+            if ( (hsd.isPathInExclude(realPath) == false) and (hsd.isPathInICGExclude(realPath) == false) ) {
+                // Only include files that do not have ICG: (No)
+                // hasICGNo uses original header name, not the real path
+                if ( ! cs.hasICGNo(header_file_name) ) {
+                    return true ;
+                }
+            }
+        }
+    }
+    return false ;
 }
 
 bool PrintAttributes::openIOFile(const std::string& header_file_name) {
@@ -237,12 +256,20 @@ void PrintAttributes::printClass( ClassValues * cv ) {
     if (openIOFile(fileName)) {
         printer->printClass(outfile, cv);
         outfile.close();
-        printSieClass(cv);
     }
 
-    if (!isHeaderExcluded(fileName, false)) {
+    if (!isHeaderExcluded(fileName)) {
          printer->printClassMap(class_map_outfile, cv);
     }
+/*
+    char* realPath = almostRealPath(fileName.c_str());
+    if (realPath) {
+        if (isFileIncluded(fileName) or hsd.isPathInExtLib(realPath)) {
+             printer->printClassMap(class_map_outfile, cv);
+        }
+        free(realPath);
+    }
+*/
 }
 
 void PrintAttributes::printEnum(EnumValues* ev) {
@@ -264,75 +291,16 @@ void PrintAttributes::printEnum(EnumValues* ev) {
     if (openIOFile(fileName)) {
         printer->printEnum(outfile, ev) ;
         outfile.close() ;
-        printSieEnum(&enumValues) ;
     }
-    
-    if (!isHeaderExcluded(fileName, false)) {
+
+    if (!isHeaderExcluded(fileName)) {
          printer->printEnumMap(enum_map_outfile, ev);
     }
-}
-
-
-void PrintAttributes::printSieClass( ClassValues * cv ) {
-    std::string xmlFileName;
-    if(sim_services_flag) {
-    #ifdef EXTERNAL_BUILD
-        xmlFileName = output_dir + "/sim_services_classes.resource";
-    #else
-        xmlFileName = std::string(getenv("TRICK_HOME")) + "/share/trick/xml/sim_services_classes.resource";
-    #endif
-    } else {
-        xmlFileName = "build/classes.resource";
+/*
+    if (isFileIncluded(fileName)) {
+         printer->printEnumMap(enum_map_outfile, ev) ;
     }
-    std::ofstream ostream(xmlFileName, std::ofstream::app);
-    ostream << "  <class name=\"" << sanitize(cv->getFullyQualifiedMangledTypeName("__")) << "\">\n";
-    for (FieldDescription* fdes : printer->getPrintableFields(*cv)) {
-        std::string type = fdes->getFullyQualifiedMangledTypeName("__");
-        std::replace(type.begin(), type.end(), ':', '_');
-        ostream << "    <member\n"
-                << "      name=\"" << fdes->getName() << "\"\n"
-                << "      type=\"" << replace_special_chars(type) << "\"\n"
-                << "      io_attributes=\"" << fdes->getIO()  << "\"\n"
-                << "      units=\"";
-        if(fdes->isDashDashUnits()) {
-            ostream <<  "--\"" ;
-        } else {
-            ostream << fdes->getUnits()  << "\"" ;
-        }
-        std::string description = fdes->getDescription();
-        if(!description.empty()) {
-            ostream << "\n      description=\"" << replace_special_chars(description) << "\"";
-        }
-        ostream << ">\n" ;
-        for(int i = 0; i < fdes->getNumDims(); i++) {
-            ostream
-                << "      <dimension>" << (fdes->getArrayDim(i) != -1 ? fdes->getArrayDim(i) : 0) << "</dimension>\n";
-        }
-        ostream << "    </member>\n";
-    }
-    ostream << "  </class>\n" << std::endl;
-    ostream.close();
-}
-
-void PrintAttributes::printSieEnum( EnumValues * ev ) {
-    std::string xmlFileName;
-    if(sim_services_flag) {
-    #ifdef EXTERNAL_BUILD
-        xmlFileName = output_dir + "/sim_services_classes.resource";
-    #else
-        xmlFileName = std::string(getenv("TRICK_HOME")) + "/share/trick/xml/include/sim_services_classes.resource";
-    #endif
-
-    } else {
-        xmlFileName = "build/classes.resource";
-    }
-    std::ofstream ostream(xmlFileName, std::ofstream::app);
-    ostream << "  <enumeration name=\"" << sanitize(ev->getFullyQualifiedTypeName("__")) << "\">\n";
-    for(EnumValues::NameValuePair nvp : ev->getFullyQualifiedPairs()) {
-        ostream << "    <pair label =\"" << nvp.first << "\" value=\"" << nvp.second << "\"/>\n";
-    }
-    ostream << "  </enumeration>\n" << std::endl;
-    ostream.close();
+*/
 }
 
 void PrintAttributes::createMapFiles() {
@@ -341,11 +309,7 @@ void PrintAttributes::createMapFiles() {
     std::string enum_map_function_name ;
 
     if ( sim_services_flag ) {
-#ifdef EXTERNAL_BUILD
-        map_dir = output_dir ;
-#else
         map_dir = "trick_source/sim_services/include/io_src" ;
-#endif
         class_map_function_name = "populate_sim_services_class_map" ;
         enum_map_function_name = "populate_sim_services_enum_map" ;
     } else {
@@ -393,11 +357,7 @@ std::set<std::string> PrintAttributes::getEmptyFiles() {
     std::set<std::string> emptyFiles;
     for (auto fi = ci.getSourceManager().fileinfo_begin() ; fi != ci.getSourceManager().fileinfo_end() ; ++fi ) {
         const clang::FileEntry * fe = (*fi).first ;
-#if (LIBCLANG_MAJOR < 4) // TODO delete when RHEL 7 no longer supported
         std::string header_file_name = fe->getName() ;
-#else
-        std::string header_file_name = fe->getName().str() ;
-#endif
 
         if ( visited_files.find(header_file_name) != visited_files.end() ) {
             continue;
@@ -421,9 +381,9 @@ void PrintAttributes::printIOMakefile() {
     std::ofstream makefile_io_src ;
     std::ofstream makefile_ICG ;
     std::ofstream io_link_list ;
-    std::ofstream trickify_io_link_list ;
     std::ofstream ICG_processed ;
     std::ofstream ext_lib ;
+    unsigned int ii ;
 
     // Don't create a makefile if we didn't process any files.
     if ( out_of_date_io_files.empty() ) {
@@ -434,16 +394,10 @@ void PrintAttributes::printIOMakefile() {
 
     makefile_io_src.open("build/Makefile_io_src") ;
     makefile_io_src
-        << "TRICK_IO_CXXFLAGS += -Wno-invalid-offsetof -Wno-old-style-cast -Wno-write-strings -Wno-unused-variable" << std::endl
+        << "TRICK_IO_CXXFLAGS += -std=c++11 -Wno-invalid-offsetof -Wno-old-style-cast -Wno-write-strings -Wno-unused-variable" << std::endl
         << std::endl
         << "ifeq ($(IS_CC_CLANG), 0)" << std::endl
         << "    TRICK_IO_CXXFLAGS += -Wno-unused-local-typedefs -Wno-unused-but-set-variable" << std::endl
-        << "    ifeq ($(shell test $(GCC_MAJOR) -lt 6; echo $$?), 0)" << std::endl
-        << "        TRICK_IO_CXXFLAGS += -std=c++11" << std::endl
-        << "    endif" << std::endl
-        << "endif" << std::endl
-        << "ifeq ($(IS_CC_CLANG), 1)" << std::endl
-        << "    TRICK_IO_CXXFLAGS += -std=c++14" << std::endl
         << "endif" << std::endl
         << std::endl
         << "IO_OBJECTS =" ;
@@ -459,7 +413,8 @@ void PrintAttributes::printIOMakefile() {
         << std::endl
         << "$(IO_OBJECTS): \%.o : \%.cpp | \%.d" << std::endl
         << "\t$(PRINT_COMPILE)" << std::endl
-        << "\t$(call ECHO_AND_LOG,$(TRICK_CXX) $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) $(TRICK_IO_CXXFLAGS) -MMD -MP -c -o $@ $<)" << std::endl
+        << "\t@echo $(TRICK_CPPC) $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) $(TRICK_IO_CXXFLAGS) -MMD -MP -c -o $@ $< >> $(MAKE_OUT)" << std::endl
+        << "\t$(ECHO_CMD)$(TRICK_CPPC) $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) $(TRICK_IO_CXXFLAGS) -MMD -MP -c -o $@ $< 2>&1 | $(TEE) -a $(MAKE_OUT) ; exit $${PIPESTATUS[0]}" << std::endl
         << std::endl
         << "$(IO_OBJECTS:.o=.d): ;" << std::endl
         << std::endl
@@ -477,13 +432,10 @@ void PrintAttributes::printIOMakefile() {
 
        io_link_list lists all io object files to be linked.
 
-       trickify_io_link_list lists all io object files to be linked for a Trickified project.
-
        ICG_process lists all header files to be used by SWIG.
      */
     makefile_ICG.open("build/Makefile_ICG") ;
     io_link_list.open("build/io_link_list") ;
-    trickify_io_link_list.open("build/trickify_io_link_list") ;
     ICG_processed.open("build/ICG_processed") ;
 
     makefile_ICG << "build/Makefile_io_src:" ;
@@ -492,7 +444,6 @@ void PrintAttributes::printIOMakefile() {
         size_t found ;
         found = (*mit).second.find_last_of(".") ;
         io_link_list << (*mit).second.substr(0,found) << ".o" << std::endl ;
-        trickify_io_link_list << (*mit).second.substr(0,found) << ".o" << std::endl ;
         ICG_processed << (*mit).first << std::endl ;
     }
     makefile_ICG.close() ;
@@ -505,7 +456,6 @@ void PrintAttributes::printIOMakefile() {
 
     io_link_list << "build/class_map.o" << std::endl ;
     io_link_list.close() ;
-    trickify_io_link_list.close() ;
 
     ext_lib.open("build/ICG_ext_lib") ;
     for ( auto& file : ext_lib_io_files ) {
@@ -611,7 +561,7 @@ bool PrintAttributes::isHeaderExcluded(const std::string& header, bool exclude_e
         return true;
     }
 
-    temp = realpath(header.c_str(), NULL);
+    temp = realpath(header.c_str(),NULL);
     if ( temp ) {
         const std::string real_path = std::string(temp);
         free(temp) ;

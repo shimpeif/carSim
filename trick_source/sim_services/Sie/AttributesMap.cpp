@@ -64,15 +64,15 @@ void Trick::AttributesMap::print_xml(std::ofstream & sie_out ) {
         ATTRIBUTES * attr = (*it).second ;
         std::string class_name = (*it).first;
         std::replace(class_name.begin(), class_name.end(), ':', '_');
-        sie_out << "  <class name=\"" <<  class_name << "\">\n" ;
+        sie_out << "  <class name=\"" <<  class_name << "\">" << std::endl ;
         while ( attr->name[0] != '\0' and (attr->type_name != NULL)) {
             sie_out << "    <member" ;
-            sie_out << "\n      name=\"" << attr->name << "\"" ;
+            sie_out << std::endl << "      name=\"" << attr->name << "\"" ;
             std::string type_name = attr->type_name;
             std::replace(type_name.begin(), type_name.end(), ':', '_');
-            sie_out << "\n      type=\"" << type_remove_dims(type_name) << "\"" ;
-            sie_out << "\n      io_attributes=\"" << attr->io << "\"" ;
-            sie_out << "\n      units=\"" ;
+            sie_out << std::endl << "      type=\"" << type_remove_dims(type_name) << "\"" ;
+            sie_out << std::endl << "      io_attributes=\"" << attr->io << "\"" ;
+            sie_out << std::endl << "      units=\"" ;
             // If the mods bit is set for using -- as the units
             if ( attr->mods & TRICK_MODS_UNITSDASHDASH ) {
                 sie_out << "--" ;
@@ -83,79 +83,18 @@ void Trick::AttributesMap::print_xml(std::ofstream & sie_out ) {
 
             std::string description = attr->des;
             if ( ! description.empty() ) {
-                sie_out << "\n      description=\"" << replace_special_chars(description) << "\"" ;
+                sie_out << std::endl << "      description=\"" << replace_special_chars(description) << "\"" ;
             }
-            sie_out << ">\n" ;
+            sie_out << ">" << std::endl ;
             if ( attr->num_index > 0 ) {
                 for (jj = 0; jj < attr->num_index; jj++) {
-                    sie_out << "      <dimension>" << attr->index[jj].size << "</dimension>\n" ;
+                    sie_out << "      <dimension>" << attr->index[jj].size << "</dimension>" << std::endl ;
                 }
             }
-            sie_out << "    </member>\n" ;
+            sie_out << "    </member>" << std::endl ;
             attr++ ;
         }
-        sie_out << "  </class>\n\n" ;
+        sie_out << "  </class>" << std::endl << std::endl ;
     }
 }
 
-void Trick::AttributesMap::print_json(std::ofstream & sie_out ) {
-    std::map<std::string, ATTRIBUTES *>::iterator it ;
-    int jj ;
-    sie_out << "  \"classes\": [\n" ;
-    for ( it = name_to_attr_map.begin() ; it != name_to_attr_map.end() ; it++ ) {
-        ATTRIBUTES * attr = (*it).second ;
-        std::string class_name = (*it).first;
-        std::replace(class_name.begin(), class_name.end(), ':', '_');
-        sie_out << "    {\n";
-        sie_out << "      \"name\": \"" <<  class_name << "\",\n" ;
-        if(attr->name[0] == '\0' || (attr->type_name == NULL)) {
-            sie_out << "      \"members\": []\n" ;
-        } else {
-            sie_out << "      \"members\": [\n" ;
-            while ( attr->name[0] != '\0' and (attr->type_name != NULL)) {
-                sie_out << "        {\n";
-                sie_out << "          \"name\": \"" << attr->name << "\",\n" ;
-                std::string type_name = attr->type_name;
-                std::replace(type_name.begin(), type_name.end(), ':', '_');
-                sie_out << "          \"type\": \"" << type_remove_dims(type_name) << "\",\n" ;
-                sie_out << "          \"io_attributes\": \"" << attr->io << "\",\n" ;
-                sie_out << "          \"units\": \"" ;
-                // If the mods bit is set for using -- as the units
-                if ( attr->mods & TRICK_MODS_UNITSDASHDASH ) {
-                    sie_out << "--" ;
-                } else {
-                    sie_out << attr->units ;
-                }
-                sie_out << "\"" ;
-
-                std::string description = attr->des;
-                if ( ! description.empty() ) {
-                    sie_out << ",\n          \"description\": \"" << replace_special_chars(description) << "\"" ;
-                }
-                if ( attr->num_index > 0 ) {
-                    sie_out << ",\n          \"dimensions\": [" ;
-                    for (jj = 0; jj < attr->num_index - 1; jj++) {
-                        sie_out << " \"" << attr->index[jj].size << "\"," ;
-                    }
-                    sie_out << " \"" << attr->index[attr->num_index - 1].size << "\" " ;
-                    sie_out << "]\n" ;
-                } else {
-                    sie_out << '\n' ;
-                }
-                sie_out << "        }" ;
-                if((attr + 1)->name[0] != '\0') {
-                    sie_out << ',';
-                }
-                sie_out << '\n';
-                attr++ ;
-            }
-            sie_out << "      ]\n" ;
-        }
-        sie_out << "    }" ;
-        if(std::next(it, 1) != name_to_attr_map.end()) {
-            sie_out << ',' ;
-        }
-        sie_out << "\n" ;
-    }
-    sie_out << "  ],\n" ;
-}

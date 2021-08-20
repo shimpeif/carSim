@@ -3,7 +3,7 @@
 /**
  PURPOSE: (Integrator Base Class)
  */
-#if defined(TRICK_VER) && !defined(TEST)
+#if defined(TRICK_VER)
     #include "trick/memorymanager_c_intf.h"
     #define INTEG_NEW(class) (class*)TMM_declare_var_1d(#class,1)
     #define INTEG_ALLOC(typespec, num) (typespec*)TMM_declare_var_1d(#typespec,(num))
@@ -62,11 +62,6 @@ namespace Trick {
            double const* derivs_in, double* state_in_out);
         virtual int integrate_2nd_order_ode (
            double const* accel, double* velocity, double* position);
-
-#ifndef SWIGPYTHON
-        void state_reset ();
-        void state_element_in (unsigned int index , double* state_p);
-#endif
 
 #ifndef SWIGPYTHON
         void state_in (double* arg1, va_list argp);
@@ -128,9 +123,6 @@ namespace Trick {
         bool use_deriv2;                  // -- set by integration technique
 
         double dt;               // -- set by IntegLoopSimObject.cpp
-#ifndef USE_ER7_UTILS_INTEGRATORS
-        double **state_origin;
-#endif
         double *state;
         double **deriv;
         double **deriv2;
@@ -153,6 +145,10 @@ namespace Trick {
 
     Integrator* getIntegrator( Integrator_type Alg, unsigned int State_size, double Dt = 0.0 );
 
+//    Integrator* getEr7Integrator(
+//       er7_utils::Integration::Technique, unsigned int State_size, double Dt);
+
+//    void deleteIntegrator( Integrator*&);
 }
 
 #endif

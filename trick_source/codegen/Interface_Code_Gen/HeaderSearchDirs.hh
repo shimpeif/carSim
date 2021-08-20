@@ -32,11 +32,9 @@ class HeaderSearchDirs {
                          bool in_sim_services ) ;
 
         /** Add all search directories to the preprocessor.
-            @param include_dirs = directories included via -I on the command line
-            @param isystem_dirs = directories included via -isystem on the command line
+            @param include_dirs = directories incuded on the command line
           */
-        void addSearchDirs ( std::vector<std::string> & include_dirs,
-                             std::vector<std::string> & isystem_dirs ) ;
+        void addSearchDirs ( std::vector<std::string> & include_dirs ) ;
 
         /** Returns true if the path argument is in a user model directory
             @param path = directory path to be checked
@@ -132,14 +130,11 @@ class HeaderSearchDirs {
         /** ${TRICK_HOME}/include/trick resolved */
         std::string trick_include_dir ;
 
-        /** Adds all of the built-in system paths contained in the TRICK_CXX compiler */
+        /** Adds all of the built-in system paths contained in the TRICK_CPPC compiler */
         void AddCompilerBuiltInSearchDirs () ;
 
-        /** Adds -I include paths */
+        /** Adds all of the paths specified on the command line */
         void AddUserSearchDirs ( std::vector<std::string> & include_dirs ) ;
-
-        /** Adds -isystem include paths */
-        void AddSystemSearchDirs ( std::vector<std::string> & isystem_dirs ) ;
 
         /** Adds ${TRICK_HOME}/trick_source to the search directories */
         void AddTrickSearchDirs () ;

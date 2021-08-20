@@ -50,13 +50,13 @@ void HeaderSearchDirs::AddCompilerBuiltInSearchDirs () {
     }
 #endif
 
-    fp = popen("${TRICK_HOME}/bin/trick-gte TRICK_CXX" , "r") ;
+    fp = popen("${TRICK_HOME}/bin/trick-gte TRICK_CPPC" , "r") ;
     fgets(line , sizeof(line) , fp) ;
     pclose(fp) ;
     std::string trick_cppc = std::string(line) ;
     std::string command ;
     trick_cppc.erase(trick_cppc.find_last_not_of(" \n\r\t")+1) ;
-    //std::cout << "TRICK_CXX = " << trick_cppc << std::endl ;
+    //std::cout << "TRICK_CPPC = " << trick_cppc << std::endl ;
     command = std::string("echo | ") + trick_cppc + std::string(" -v -xc++ -E - 2>&1") ;
     //std::cout << "command = " << command << std::endl ;
 
@@ -106,22 +106,10 @@ void HeaderSearchDirs::AddUserSearchDirs ( std::vector<std::string> & include_di
         if ( resolved_path != NULL ) {
             //std::cout << "adding resolved_path = " << resolved_path << std::endl ;
             hso.AddPath(resolved_path , clang::frontend::Angled, false, true);
+            // Add the path as a system path as well for those included files that are erroneously in <>
         }
     }
-}
 
-void HeaderSearchDirs::AddSystemSearchDirs ( std::vector<std::string> & isystem_dirs ) {
-    //std::cout << "num isystem dirs " << isystem_dirs.size() << std::endl ;
-    int ii ;
-
-    for  ( ii = 0 ; ii < isystem_dirs.size() ; ii++ ) {
-        //std::cout << "isystem dirs " << isystem_dirs[ii] << std::endl ;
-        char * resolved_path = almostRealPath(isystem_dirs[ii].c_str()) ;
-        if ( resolved_path != NULL ) {
-            //std::cout << "adding resolved_path = " << resolved_path << std::endl ;
-            hso.AddPath(resolved_path , clang::frontend::System, false, true);
-        }
-    }
 }
 
 void HeaderSearchDirs::AddTrickSearchDirs () {
@@ -198,10 +186,8 @@ void HeaderSearchDirs::ApplyHeaderSearchOptions () {
 */
 }
 
-void HeaderSearchDirs::addSearchDirs ( std::vector<std::string> & include_dirs,
-                                       std::vector<std::string> & isystem_dirs) {
+void HeaderSearchDirs::addSearchDirs ( std::vector<std::string> & include_dirs ) {
     AddUserSearchDirs( include_dirs ) ;
-    AddSystemSearchDirs( isystem_dirs ) ;
     AddTrickSearchDirs() ;
     AddCompilerBuiltInSearchDirs() ;
     ApplyHeaderSearchOptions() ;
@@ -226,11 +212,7 @@ bool HeaderSearchDirs::isPathInUserDir (const std::string& in_dir ) {
 
     clang::HeaderSearch::search_dir_iterator sdi ;
     for ( sdi = hs.system_dir_begin() ; sdi != hs.system_dir_end() ; sdi++ ) {
-#if (LIBCLANG_MAJOR < 4) // TODO delete when RHEL 7 no longer supported
        std::string curr_dir = (*sdi).getName() ;
-#else
-       std::string curr_dir = (*sdi).getName().str() ;
-#endif
         if ( ! in_dir.compare(0, curr_dir.size(), curr_dir)) {
             return false ;
         }
@@ -246,18 +228,9 @@ bool HeaderSearchDirs::isPathInUserDir (const std::string& in_dir ) {
 
 bool HeaderSearchDirs::isPathInUserOrTrickDir (const std::string& in_dir ) {
 
-    const std::string trick_home{getenv("TRICK_HOME")};
-    if ( ! in_dir.compare(0, trick_home.size(), trick_home)) {
-        return true ;
-    }
-
     clang::HeaderSearch::search_dir_iterator sdi ;
     for ( sdi = hs.system_dir_begin() ; sdi != hs.system_dir_end() ; sdi++ ) {
-#if (LIBCLANG_MAJOR < 4) // TODO delete when RHEL 7 no longer supported
        std::string curr_dir = (*sdi).getName() ;
-#else
-       std::string curr_dir = (*sdi).getName().str() ;
-#endif
         if ( ! in_dir.compare(0, curr_dir.size(), curr_dir)) {
             return false ;
         }

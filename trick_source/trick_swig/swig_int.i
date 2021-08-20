@@ -1,8 +1,6 @@
 
 %module swig_int
 
-%include "std_string.i"
-
 %{
 
 #include "trick/swig/swig_int.hh"
@@ -13,8 +11,6 @@
 // expose the __str__ function to swig so that it can do pretty prints of parameters with units
 class swig_int {
     public:
-        std::string units;
-
         char * __str__() ;
         char * __repr__() ;
 

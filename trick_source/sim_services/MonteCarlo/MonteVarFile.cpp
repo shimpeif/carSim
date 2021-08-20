@@ -72,14 +72,11 @@ std::string Trick::MonteVarFile::get_next_value() {
         // Verify the input column number is valid.
         if ((column == 0) || (column > ntokens)) {
             char string[100];
-            sprintf(string, "Trick:MonteVarFile An invalid column number %u, valid column numbers are 1 - %u", column, ntokens);
+            sprintf(string, "Trick:MonteVarFile An invalid column number %d, valid column numbers are 1 - %d", column, ntokens);
             exec_terminate_with_return(-1, __FILE__, __LINE__, string);
         }
 
         // Get the next value.
-        if(temp_str) {
-            free(temp_str);
-        }
         temp_str = strdup(line.c_str());
         token = strtok(temp_str, " \t");
 
@@ -97,12 +94,8 @@ std::string Trick::MonteVarFile::get_next_value() {
             ss << name << " = " << token;
         else
             ss << name << " = " << "trick.attach_units(\"" << unit << "\", " << token << ")";
-        if(temp_str) {
-            free(temp_str);
-            temp_str = nullptr;
-        }
-        return ss.str();
 
+        return ss.str();
     }
     char string[100];
     sprintf(string, "Trick:MonteVarFile the input file \"%s\" is not open for reading", file_name.c_str());

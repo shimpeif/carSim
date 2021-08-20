@@ -40,14 +40,10 @@ namespace Trick {
             void class_attr_map_print_xml() ;
             void enum_attr_map_print_xml() ;
             void top_level_objects_print_xml() ;
-            void sie_print_json() ;
-            void sie_append_runtime_objs() ;
-            void runtime_objects_print(std::fstream & sie_out) ;
 
         private:
 
             void top_level_objects_print(std::ofstream & sie_out) ;
-            void top_level_objects_json(std::ofstream & sie_out) ;
 
             // These are singleton maps holding all attributes known to the sim
             Trick::AttributesMap * class_attr_map ; /* ** -- This is be ignored by ICG */

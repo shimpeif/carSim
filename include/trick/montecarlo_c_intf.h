@@ -21,7 +21,7 @@ void mc_set_enabled(int enabled);
  * @relates Trick::MonteCarlo
  * @copydoc get_enabled
  */
-int mc_get_enabled(void);
+int mc_get_enabled();
 
 /**
  * @relates Trick::MonteCarlo
@@ -33,13 +33,13 @@ void mc_set_dry_run(int dry_run);
  * @relates Trick::MonteCarlo
  * @copydoc get_dry_run
  */
-int mc_get_dry_run(void);
+int mc_get_dry_run();
 
 /**
  * @relates Trick::MonteCarlo
  * @copydoc is_slave
  */
-int mc_is_slave(void);
+int mc_is_slave();
 
 /**
  * @relates Trick::MonteCarlo
@@ -51,7 +51,7 @@ void mc_set_localhost_as_remote(int localhost_as_remote);
  * @relates Trick::MonteCarlo
  * @copydoc get_localhost_as_remote
  */
-int mc_get_localhost_as_remote(void);
+int mc_get_localhost_as_remote();
 
 /**
  * @relates Trick::MonteCarlo
@@ -63,7 +63,7 @@ void mc_set_custom_slave_dispatch(int custom_slave_dispatch);
  * @relates Trick::MonteCarlo
  * @copydoc get_custom_slave_dispatch
  */
-int mc_get_custom_slave_dispatch(void);
+int mc_get_custom_slave_dispatch();
 
 /**
  * @relates Trick::MonteCarlo
@@ -75,7 +75,7 @@ void mc_set_timeout(double timeout);
  * @relates Trick::MonteCarlo
  * @copydoc get_timeout
  */
-double mc_get_timeout(void);
+double mc_get_timeout();
 
 /**
  * @relates Trick::MonteCarlo
@@ -87,7 +87,7 @@ void mc_set_max_tries(unsigned int max_tries);
  * @relates Trick::MonteCarlo
  * @copydoc get_max_tries
  */
-unsigned int mc_get_max_tries(void);
+unsigned int mc_get_max_tries();
 
 /**
  * @relates Trick::MonteCarlo
@@ -103,21 +103,15 @@ void mc_set_slave_sim_options(const char *slave_sim_options);
 
 /**
  * @relates Trick::MonteCarlo
- * set #Trick::MonteCarlo::slave_output_directory
- */
-void mc_set_slave_output_directory(const char *slave_output_directory);
-
-/**
- * @relates Trick::MonteCarlo
  * get #Trick::MonteCarlo::slave_sim_options
  */
-const char *mc_get_slave_sim_options(void);
+const char *mc_get_slave_sim_options();
 
 /**
  * @relates Trick::MonteCarlo
  * @copydoc get_user_cmd_string
  */
-const char *mc_get_user_cmd_string(void);
+const char *mc_get_user_cmd_string();
 
 /**
  * @relates Trick::MonteCarlo
@@ -129,7 +123,7 @@ void mc_set_custom_pre_text(const char *custom_pre_text);
  * @relates Trick::MonteCarlo
  * @copydoc get_custom_pre_text
  */
-const char *mc_get_custom_pre_text(void);
+const char *mc_get_custom_pre_text();
 
 /**
  * @relates Trick::MonteCarlo
@@ -141,7 +135,7 @@ void mc_set_custom_post_text(const char *custom_post_text);
  * @relates Trick::MonteCarlo
  * @copydoc get_custom_post_text
  */
-const char *mc_get_custom_post_text(void);
+const char *mc_get_custom_post_text();
 
 /**
  * @relates Trick::MonteCarlo
@@ -153,7 +147,7 @@ void mc_set_verbosity(int verbosity);
  * @relates Trick::MonteCarlo
  * @copydoc get_verbosity
  */
-int mc_get_verbosity(void);
+int mc_get_verbosity();
 
 /**
  * @relates Trick::MonteCarlo
@@ -165,19 +159,19 @@ void mc_set_num_runs(unsigned int num_runs);
  * @relates Trick::MonteCarlo
  * @copydoc get_num_runs
  */
-unsigned int mc_get_num_runs(void);
+unsigned int mc_get_num_runs();
 
 /**
  * @relates Trick::MonteCarlo
  * @copydoc get_num_results
  */
-unsigned int mc_get_num_results(void);
+unsigned int mc_get_num_results();
 
 /**
  * @relates Trick::MonteCarlo
  * @copydoc get_slave_id
  */
-unsigned int mc_get_slave_id(void);
+unsigned int mc_get_slave_id();
 
 /**
  * @relates Trick::MonteCarlo
@@ -219,7 +213,7 @@ void mc_read(char *buffer, int size);
  * @relates Trick::MonteCarlo
  * Gets the current run being processed.
  */
-unsigned int mc_get_current_run(void) ;
+unsigned int mc_get_current_run() ;
 
 /**
  * @relates Trick::MonteCarlo
@@ -243,13 +237,13 @@ void mc_set_connection_device_port(int port_number) ;
  * @relates Trick::MonteCarlo
  * Gets the port for the listen_device.
  */
-int  mc_get_listen_device_port(void) ;
+int  mc_get_listen_device_port() ;
 
 /**
  * @relates Trick::MonteCarlo
  * Gets the port for the connection_device.
  */
-int  mc_get_connection_device_port(void) ;
+int  mc_get_connection_device_port() ;
 
 #ifdef __cplusplus
 }

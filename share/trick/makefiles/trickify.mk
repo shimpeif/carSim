@@ -1,9 +1,9 @@
-# This file can be used to create an object file or library containing the io_*
-# and *_py code that Trick would normally generate during the simulation build
-# process. Sims can then link against that, reducing compilation time.
+# This file can be used to create an object file containing the io_* and py_*
+# code that Trick would normally generate during the simulation build process.
+# Sims can then link against this object file, reducing compilation time.
 #
 # To use it, create a directory that includes a file named S_source.hh that
-# includes all header files for which you want io_* and _py* code generated.
+# includes all header files for which you want io_* and py_* code generated.
 # This is not the S_source.hh that Trick generates during compilation, but
 # Trick's tools assume this name for now, so you have to use it. Then, in that
 # directory, run the following command:
@@ -25,29 +25,12 @@
 # paths to the header files included by your S_source.hh. For instance:
 # -I$(HOME)/myproject/foo/include -I$(HOME)/myproject/bar/include
 #
-# TRICKIFY_BUILD_TYPE (optional)
-# Valid options are:
-# 1. STATIC (.a)
-#    Create a static library. This will require the use of --whole-archive (on
-#    Linux) or -all_load/-force_load (on Mac) when linking the sim executeable.
-#    Trick uses dlsym to dynamically load symbols at run time, but the linker,
-#    by default, will not include symbols from static libraries that are not
-#    known to be needed at compile time.
-# 2. SHARED (.so)
-#    Create a shared object (dynamically linked library). This may require the
-#    use of -rpath to ensure the linker can find the shared object at runtime
-#    unless you explicitly link against it (as opposed to using -L and -l)
-#    during compilation.
-# 3. PLO (.o) [default]
-#    Create a partially-linked object. No special linker options are required.
-#
 # TRICKIFY_OBJECT_NAME (optional)
-# The name of the generated object file or library. The default value is
-# trickified.o. You should choose something more meaningful, especially if
-# you're using another build type.
+# The name of the generated object file. The default value is trickified.o.
+# You should choose something more meaningful, like trickified_myproject.o.
 #
-# TRICKIFY_PYTHON_DIR (optional)
-# The file into which generated Python modules are zipped. The default
+# TRICKIFY_PTYON_DIR (optional)
+# The directory into which generated Python modules are placed. The default
 # value is python (in the current directory).
 #
 # -----------------------------------------------------------------------------
@@ -81,61 +64,59 @@
 # 	$(MAKE) -f $(TRICKIFY)
 #
 # clean:
-# 	rm -rf $(TRICKIFY_OBJECT_NAME) build python .trick
+# 	rm -rf $(TRICKIFY_OBJECT_NAME) build python
 #
 # -----------------------------------------------------------------------------
 #
 # For more information, see:
-# https://nasa.github.io/trick/documentation/building_a_simulation/Trickified-Project-Libraries
+# github.com/nasa/trick/wiki/Trickified-Project-Libraries
 
 ifndef TRICKIFY_CXX_FLAGS
     $(error TRICKIFY_CXX_FLAGS must be set)
 endif
 
-TRICKIFY_BUILD_TYPE ?= PLO
 TRICKIFY_OBJECT_NAME ?= trickified.o
-
-# We started zipping the Python modules, and this variable is now misnamed :(
-# python.zip would be a better default value, but leave it as python for backward compatibility.
 TRICKIFY_PYTHON_DIR ?= python
-TRICKIFY_PYTHON_DIR := $(abspath $(TRICKIFY_PYTHON_DIR))
+TRICK_HOME := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/../../..)
 
-include $(dir $(lastword $(MAKEFILE_LIST)))Makefile.common
-
-BUILD_DIR := $(dir $(MAKE_OUT))
-PY_LINK_LIST := $(BUILD_DIR)trickify_py_link_list
-IO_LINK_LIST := $(BUILD_DIR)trickify_io_link_list
-LINK_LISTS := @$(IO_LINK_LIST) @$(PY_LINK_LIST)
-ifneq ($(wildcard $(BUILD_DIR)),)
-    SWIG_OBJECTS := $(shell cat $(PY_LINK_LIST))
-    IO_OBJECTS   := $(shell cat $(IO_LINK_LIST))
+ifneq ($(wildcard build),)
+    SWIG_OBJECTS := $(shell tail -n +2  build/S_library_swig)
+    SWIG_OBJECTS := $(addprefix build,$(addsuffix _py.o,$(basename $(SWIG_OBJECTS))))
+    IO_OBJECTS := $(shell find build -name "io_*.cpp")
+    IO_OBJECTS := $(IO_OBJECTS:.cpp=.o)
 endif
 
+include $(TRICK_HOME)/share/trick/makefiles/Makefile.common
 TRICK_CFLAGS   += $(TRICKIFY_CXX_FLAGS)
 TRICK_CXXFLAGS += $(TRICKIFY_CXX_FLAGS)
 
 # Ensure we can process all headers
 TRICK_EXT_LIB_DIRS :=
 
-.PHONY: all
-all: $(TRICKIFY_OBJECT_NAME) $(TRICKIFY_PYTHON_DIR)
-
+# When given a library, the linker will only link in objects that are known to
+# be needed at link time. However, Trick uses dlsym to dynamically load the
+# objects we'll be creating here. It cannot be known which objects will be
+# needed at link time, so the sim has to link them all. In that case, we might
+# as well create an object (which will be fully linked in by the sim) instead
+# of a library (which would require the use of the -whole-archive option).
+#
+# One disadvantage of this approach is that we have to link all of the objects
+# in this rule no matter how many have changed, whereas ar would allow us to
+# replace only the changed objects. However, Trickified projects are
+# necessarily used as third-party libraries, and so would be expected to
+# change infrequently. Moreover, the methods for force-linking a library differ
+# between Linux and Mac, so obviating the need for it simplifies a Trickified
+# project's user-facing makefile.
 $(TRICKIFY_OBJECT_NAME): $(SWIG_OBJECTS) $(IO_OBJECTS) | $(dir $(TRICKIFY_OBJECT_NAME))
 	$(info $(call COLOR,Linking)    $@)
-ifeq ($(TRICKIFY_BUILD_TYPE),PLO)
-	$(call ECHO_AND_LOG,$(LD) $(LD_PARTIAL) -o $@ $(LINK_LISTS))
-else ifeq ($(TRICKIFY_BUILD_TYPE),SHARED)
-	$(call ECHO_AND_LOG,$(TRICK_CXX) -shared -o $@ $(LINK_LISTS))
-else ifeq ($(TRICKIFY_BUILD_TYPE),STATIC)
-	$(call ECHO_AND_LOG,ar rcs $@ $(LINK_LISTS))
-endif
+	@ld -r -o $@ $^
 
-$(dir $(TRICKIFY_OBJECT_NAME)) $(BUILD_DIR) $(dir $(TRICKIFY_PYTHON_DIR)) .trick:
+$(dir $(TRICKIFY_OBJECT_NAME)) $(TRICKIFY_PYTHON_DIR):
 	@mkdir -p $@
 
 $(IO_OBJECTS): %.o: %.cpp
 	$(info $(call COLOR,Compiling)  $<)
-	$(call ECHO_AND_LOG,$(TRICK_CXX) $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) -std=c++11 -Wno-invalid-offsetof -MMD -MP -c -o $@ $<)
+	@$(TRICK_CPPC) $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) -std=c++11 -Wno-invalid-offsetof -MMD -MP -c -o $@ $<
 
 $(IO_OBJECTS:.o=.d): %.d: ;
 
@@ -143,28 +124,19 @@ $(IO_OBJECTS:.o=.d): %.d: ;
 
 $(SWIG_OBJECTS): %.o: %.cpp
 	$(info $(call COLOR,Compiling)  $<)
-	$(call ECHO_AND_LOG,$(TRICK_CXX) $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) $(PYTHON_INCLUDES) -Wno-unused-parameter -Wno-shadow -c -o $@ $<)
+	@$(TRICK_CPPC) $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) $(PYTHON_INCLUDES) -Wno-unused-parameter -Wno-shadow -c -o $@ $<
 
-$(SWIG_OBJECTS:.o=.cpp): %.cpp: %.i | %.d .trick $(SWIG_OBJECTS:.o=.i)
+$(SWIG_OBJECTS:.o=.cpp): %.cpp: %.i | $(TRICKIFY_PYTHON_DIR) $(SWIG_OBJECTS:.o=.i)
 	$(info $(call COLOR,SWIGing)    $<)
-	$(call ECHO_AND_LOG,$(SWIG) $(TRICK_INCLUDE) $(TRICK_DEFINES) $(TRICK_VERSIONS) $(TRICK_SWIG_FLAGS) -c++ -python -includeall -ignoremissing -w201 -w303 -w315 -w325 -w362 -w389 -w401 -w451 -MMD -MP -outdir .trick -o $@ $<)
-
-$(SWIG_OBJECTS:.o=.d): ;
-
--include $(SWIG_OBJECTS:.o=.d)
+	@$(SWIG) $(TRICK_INCLUDE) $(TRICK_DEFINES) $(TRICK_VERSIONS) $(SWIG_FLAGS) -c++ -python -includeall -ignoremissing -w201,303,325,362,389,401,451 -outdir $(TRICKIFY_PYTHON_DIR) -o $@ $<
 
 define create_convert_swig_rule
-$(shell basename $(BUILD_DIR))/%_py.i: /%.$1
-	$$(call ECHO_AND_LOG,${TRICK_HOME}/$(LIBEXEC)/trick/convert_swig $${TRICK_CONVERT_SWIG_FLAGS} $$<)
+build/%_py.i: /%.$1
+	${TRICK_HOME}/$(LIBEXEC)/trick/convert_swig ${TRICK_CONVERT_SWIG_FLAGS} $$<
 endef
 
-$(foreach EXTENSION,H h hh hxx h++ hpp,$(eval $(call create_convert_swig_rule,$(EXTENSION))))
-
-$(TRICKIFY_PYTHON_DIR): $(SWIG_OBJECTS:.o=.cpp) | $(dir $(TRICKIFY_PYTHON_DIR))
-	$(info $(call COLOR,Compiling)  Python modules)
-	$(call ECHO_AND_LOG,$(PYTHON) -m compileall -q .trick)
-	$(info $(call COLOR,Zipping)    Python modules into $@)
-	$(call ECHO_AND_LOG,cd .trick && zip -Arq $@ .)
+EXTENSIONS := H h hh hxx h++ hpp
+$(foreach EXTENSION,$(EXTENSIONS),$(eval $(call create_convert_swig_rule,$(EXTENSION))))
 
 # SWIG_OBJECTS and IO_OBJECTS are meant to contain all of the *_py and io_*
 # object file names, respectively, by looking at products of ICG and
@@ -197,9 +169,9 @@ $(TRICKIFY_PYTHON_DIR): $(SWIG_OBJECTS:.o=.cpp) | $(dir $(TRICKIFY_PYTHON_DIR))
 # dependency list. The method is laid out in more detail here:
 # http://make.mad-scientist.net/papers/advanced-auto-dependency-generation/
 
-$(BUILD_DIR)S_source.d: | $(BUILD_DIR)
-	$(call ECHO_AND_LOG,$(TRICK_HOME)/bin/trick-ICG $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) $(TRICK_ICGFLAGS) S_source.hh)
-	$(call ECHO_AND_LOG,$(TRICK_HOME)/$(LIBEXEC)/trick/make_makefile_swig)
-	$(call ECHO_AND_LOG,$(TRICK_CC) -MM -MP -MT $@ -MF $@ $(TRICKIFY_CXX_FLAGS) S_source.hh)
+build/S_source.d:
+	@$(TRICK_HOME)/bin/trick-ICG $(TRICK_CXXFLAGS) $(TRICK_SYSTEM_CXXFLAGS) $(TRICK_ICGFLAGS) S_source.hh
+	@$(TRICK_HOME)/$(LIBEXEC)/trick/make_makefile_swig
+	@$(TRICK_CC) -MM -MP -MT $@ -MF $@ $(TRICKIFY_CXX_FLAGS) S_source.hh
 
--include $(BUILD_DIR)S_source.d
+-include build/S_source.d

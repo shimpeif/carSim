@@ -7,7 +7,6 @@
 #define EXECUTIVE_HH
 
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <map>
 #include <vector>
@@ -43,9 +42,6 @@ namespace Trick {
      */
 
     class Executive : public Trick::Scheduler {
-        public:
-            /** gets #except_return */
-            virtual int get_except_return() const;
 
         protected:
             /** Attempts to attach a debugger in the event a signal shuts down the simulation.\n */
@@ -71,9 +67,6 @@ namespace Trick {
 
             /** Allows the trapping of SIGABRT signals and graceful shutdown.\n */
             bool trap_sigabrt;               /**< trick_units(--) */
-
-            /** Allows the trapping of SIGCHLD signals\n */
-            bool trap_sigchld;               /**< trick_units(--) */
 
             /** Flags a restart was loaded\n */
             bool restart_called;    /**< trick_io(**) trick_units(--) */
@@ -161,10 +154,6 @@ namespace Trick {
 
             /** Next scheduled jobs call time.\n */
             long long job_call_time_tics;   /**< trick_units(--) */
-
-            /** stream to record elapsed time of default_data, 
-                input_processor, and initialization queues \n */
-            std::ofstream init_log_stream; /**< trick_units(--) */
 
             /** Queue to hold default data jobs.\n */
             Trick::ScheduledJobQueue default_data_queue ;     /**< trick_io(**) */
@@ -544,14 +533,6 @@ namespace Trick {
             bool get_trap_sigabrt() ;
 
             /**
-             @userdesc Command to get the trap sigchld toggle value (will SIGCHLD signal be trapped).
-             @par Python Usage:
-             @code <my_int> = trick.exec_get_trap_sigsegv() @endcode
-             @return boolean (C integer 0/1) Executive::trap_sigsegv
-            */
-            bool get_trap_sigchld() ;
-
-            /**
              @brief @userdesc Command to set the attach debugger toggle value.
              @param on_off - boolean yes (C integer 1) = attach debugger if signal shuts sim down. no (C integer 0) = do not attach debugger.
              @return always 0
@@ -724,15 +705,6 @@ namespace Trick {
              @return always 0
             */
             int set_trap_sigabrt(bool on_off) ;
-
-            /**
-             @userdesc Command to enable/disable the trapping of SIGCHILD signals.
-             @par Python Usage:
-             @code trick.exec_set_trap_child(<on_off>) @endcode
-             @param on_off - boolean yes (C integer 1) = enable trap, no (C integer 0) = disable trap
-             @return always 0
-            */
-            int set_trap_sigchld(bool on_off) ;
 
             /**
              @userdesc Command to get the simulation time in seconds.
@@ -1292,12 +1264,6 @@ namespace Trick {
              @return always 0
             */
             virtual int exec_terminate(const char *file_name, const char *error);
-            
-            /* deleted functions  */
-      private:
-            /* SWIG doesn't like the Executive assignment operator because of ofstream init_log_stream */
-            Executive& operator=(const Executive&); /* = delete; '= delete' is not compatible with SWIG 2.0.
-                                                                  stick to 'private' for now */
 
     } ;
 

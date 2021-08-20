@@ -13,7 +13,7 @@ int Trick::MonteCarlo::construct_run_directory() {
     if (run_directory.empty()) {
         std::string run_base_directory = command_line_args_get_output_dir();
         if (run_base_directory.empty()) {
-            if (verbosity >= MC_ERROR) {
+            if (verbosity >= ERROR) {
                 message_publish(MSG_ERROR, "Monte [Master] Could not get the output directory.\n") ;
             }
             return -1;
@@ -28,18 +28,12 @@ int Trick::MonteCarlo::construct_run_directory() {
 
         run_directory = basename((char *)command_line_args_get_output_dir());
         if (run_directory.empty()) {
-            if (verbosity >= MC_ERROR) {
+            if (verbosity >= ERROR) {
                 message_publish(MSG_ERROR, "Monte [Master] Could not get the run directory name.\n") ;
             }
             return -1;
         }
         run_directory = run_base_directory + "MONTE_" + run_directory;
-    }
-
-    // If the user hasn't set an output directory for slaves, default to
-    // the same location as the master's output.
-    if (slave_output_directory.empty()) {
-        slave_output_directory = run_directory;
     }
 
     if  (access(run_directory.c_str(), F_OK) != 0) {
@@ -54,7 +48,7 @@ int Trick::MonteCarlo::construct_run_directory() {
 int Trick::MonteCarlo::open_file(std::string file_name, FILE** file_ptr) {
 
     if ((*file_ptr = fopen(file_name.c_str(), "w")) == NULL) {
-        if (verbosity >= MC_ERROR) {
+        if (verbosity >= ERROR) {
             message_publish(MSG_ERROR, "Monte [Master] Could not open %s for writing.\n", file_name.c_str()) ;
         }
         return -1;

@@ -1,25 +1,5 @@
 <p align=center>
-<a href="https://nasa.github.io/trick">
 <img src="https://raw.github.com/nasa/Trick/master/TrickLogo.png" alt="Trick Logo" height=150px>
-</a>
-</p>
-
-<p align=left>
-<a href="https://github.com/nasa/trick/actions?query=workflow%3ALinux">
-<img src="https://github.com/nasa/trick/workflows/Linux/badge.svg?branch=master" alt="Linux" height=30px>
-</a>
-</p>
-
-<p align=left>
-<a href="https://github.com/nasa/trick/actions?query=workflow%3AmacOS">
-<img src="https://github.com/nasa/trick/workflows/macOS/badge.svg?branch=master" alt="macOS" height=30px>
-</a>
-</p>
-
-<p align=left>
-<a href="https://github.com/nasa/trick/actions?query=workflow%3A32-bit">
-<img src="https://github.com/nasa/trick/workflows/32-bit/badge.svg?branch=master" alt="macOS" height=30px>
-</a>
 </p>
 
 <p align=justify>
@@ -32,9 +12,9 @@ The Trick Simulation Environment, developed at the NASA Johnson Space Center, is
     <col width="33%">
     <thead>
         <tr>
-            <th><a href="https://nasa.github.io/trick/documentation/install_guide/Install-Guide">Install Guide</a></th>
-            <th><a href="https://nasa.github.io/trick/tutorial/Tutorial">Tutorial</a></th>
-            <th><a href="https://nasa.github.io/trick/documentation/Documentation-Home">Documentation</a></th>
+            <th><a href="https://github.com/nasa/trick/wiki/Install-Guide">Install Guide</a></th>
+            <th><a href="https://github.com/nasa/trick/wiki/Tutorial">Tutorial</a></th>
+            <th><a href="https://github.com/nasa/trick/wiki/Documentation-Home">Documentation</a></th>
         </tr>
     </thead>
     <tbody>
@@ -52,9 +32,9 @@ The Trick Simulation Environment, developed at the NASA Johnson Space Center, is
     <col width="33%">
     <thead>
         <tr>
-            <th><a href="https://nasa.github.io/trick/related_projects/Related-Projects">Related Projects</a></th>
-            <th><a href="https://nasa.github.io/trick/faq/FAQ">Frequently Asked Questions</a></th>
-            <th><a href="https://nasa.github.io/trick/howto_guides/How-To-Guides">How-To Guides</a></th>
+            <th><a href="https://github.com/nasa/trick/wiki/Related-Projects">Related Projects</a></th>
+            <th><a href="https://github.com/nasa/trick/wiki/FAQ">Frequently Asked Questions</a></th>
+            <th><a href="https://github.com/nasa/trick/wiki/How-To-Home">How-To Guides</a></th>
         </tr>
     </thead>
     <tbody>

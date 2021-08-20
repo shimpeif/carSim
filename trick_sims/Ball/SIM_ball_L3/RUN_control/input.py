@@ -1,5 +1,5 @@
 
-exec(open("Modified_data/data_record.dr").read())
+execfile("Modified_data/data_record.dr")
 
 
 ball2.state.input.mass = trick.sim_services.attach_units("kg" , 10.0)

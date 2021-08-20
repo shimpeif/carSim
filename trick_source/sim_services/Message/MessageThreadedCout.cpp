@@ -74,7 +74,6 @@ void * Trick::MessageThreadedCout::thread_body() {
         write_pending_messages() ;
         RELEASE() ;
     }
-    return (void*)0;
 }
 
 void Trick::MessageThreadedCout::write_pending_messages() {

@@ -1,5 +1,0 @@
-websockets
-pytest-asyncio
-pytest
-requests
-psutil

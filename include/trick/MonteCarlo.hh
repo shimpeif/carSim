@@ -17,8 +17,6 @@
 #ifdef SWIG
 // This instructs SWIG to use dynamic_cast and return one of the derived type for the get_variable function.
 %factory(Trick::MonteVar * Trick::MonteCarlo::get_variable, Trick::MonteVarCalculated, Trick::MonteVarFile, Trick::MonteVarFixed, Trick::MonteVarRandom) ;
-// This, paired with get_variables, allows access to the variables from the input file.
-%template(MonteVarVector) std::vector<Trick::MonteVar*>;
 #endif
 
 namespace Trick {
@@ -38,14 +36,13 @@ namespace Trick {
         public:
         /** Details the manner in which this run exited. */
         enum ExitStatus {
-            MC_RUN_INCOMPLETE,          /**< not completed */
-            MC_RUN_COMPLETE,            /**< process completed with exit status zero */
-            MC_RUN_FAILED,              /**< process completed with non-zero exit status */
-            MC_RUN_DUMPED_CORE,         /**< core dumped */
-            MC_RUN_TIMED_OUT,           /**< timed out */
-            MC_CANT_CREATE_OUTPUT_DIR,  /**< could not write output files */
-            MC_PROBLEM_PARSING_INPUT,   /**< problem parsing monte carlo input */
-            MC_UNRECOGNIZED_RETURN_CODE /**< unrecognized return code */
+            INCOMPLETE, /**< not completed */
+            COMPLETE,   /**< completed with no errors */
+            CORED,      /**< core dumped */
+            TIMEDOUT,   /**< timed out */
+            NO_PERM,    /**< could not write output files */
+            BAD_INPUT,  /**< problem parseing monte carlo input */
+            UNKNOWN     /**< unrecognized return code */
         };
 
         /** Unique identifier sequentially assigned, starting at zero, by the master. */
@@ -76,7 +73,7 @@ namespace Trick {
             num_tries(0),
             start_time(0),
             end_time(0),
-            exit_status(MC_RUN_INCOMPLETE) {}
+            exit_status(INCOMPLETE) {}
 
     };
 
@@ -96,23 +93,23 @@ namespace Trick {
         public:
         /** Operational state. */
         enum State {
-            MC_UNINITIALIZED,         /**< newly created */
-            MC_INITIALIZING,          /**< starting up */
-            MC_READY,                 /**< awaiting new run */
-            MC_RUNNING,               /**< processing a run */
-            MC_STOPPING,              /**< stopping after current run */
-            MC_STOPPED,               /**< not accepting new runs */
-            MC_FINISHED,              /**< completed all runs */
-            MC_UNRESPONSIVE_RUNNING,  /**< timed out and in a running state */
-            MC_UNRESPONSIVE_STOPPING, /**< timed out and in a stopping state */
-            MC_DISCONNECTED           /**< lost connection */
+            UNINITIALIZED,         /**< newly created */
+            INITIALIZING,          /**< starting up */
+            READY,                 /**< awaiting new run */
+            RUNNING,               /**< processing a run */
+            STOPPING,              /**< stopping after current run */
+            STOPPED,               /**< not accepting new runs */
+            FINISHED,              /**< completed all runs */
+            UNRESPONSIVE_RUNNING,  /**< timed out and in a running state */
+            UNRESPONSIVE_STOPPING, /**< timed out and in a stopping state */
+            DISCONNECTED           /**< lost connection */
         };
 
         /** Master-to-slave commands. */
         enum Command {
-            MC_PROCESS_RUN, /**< process a new run */
-            MC_SHUTDOWN,    /**< kill any executing run, call shutdown jobs, and shutdown cleanly */
-            MC_DIE          /**< kill any executing run, do not call shutdown jobs, and exit */
+            PROCESS_RUN, /**< process a new run */
+            SHUTDOWN,    /**< kill any executing run, call shutdown jobs, and shutdown cleanly */
+            DIE          /**< kill any executing run, do not call shutdown jobs, and exit */
         };
 
         /** Unique identifier assigned by the master. */
@@ -169,7 +166,7 @@ namespace Trick {
          */
         MonteSlave(std::string name = "localhost") :
             id(0),
-            state(MC_UNINITIALIZED),
+            state(UNINITIALIZED),
             port(0),
             current_run(NULL),
             num_dispatches(0),
@@ -251,17 +248,14 @@ namespace Trick {
         public:
         /** Verbosity of message reporting. */
         enum Verbosity {
-            MC_NONE,          /**< report no messages */
-            MC_ERROR,         /**< report error messages */
-            MC_INFORMATIONAL, /**< report error and informational messages, no warning messages */
-            MC_ALL            /**< report all messages (error, informational & warning) */
+            NONE,          /**< report no messages */
+            ERROR,         /**< report error messages */
+            INFORMATIONAL, /**< report error and informational messages, no warning messages */
+            ALL            /**< report all messages (error, informational & warning) */
         };
 
         /** Options to be passed to the slave sim. */
         std::string slave_sim_options;
-
-        /** Base output directory for slaves. */
-        std::string slave_output_directory;
 
         private:
         int run_queue(Trick::ScheduledJobQueue* queue, std::string in_string) ;
@@ -339,11 +333,8 @@ namespace Trick {
         /** Runs to be dispatched. */
         std::deque <Trick::MonteRun *> runs;                 /**< \n trick_io(**) trick_units(--) */
 
-        /** Runs whose slave child process completed with a non-zero exit status. */
+        /** Failed runs. */
         std::deque <Trick::MonteRun *> failed_runs;          /**< \n trick_io(**) trick_units(--) */
-
-        /** Runs whose slave child process terminated with an error. */
-        std::deque <Trick::MonteRun *> error_runs;           /**< \n trick_io(**) trick_units(--) */
 
         /** Valid ranges. */
         std::vector <Trick::MonteRange *> run_ranges;        /**< \n trick_io(**) trick_units(--) */
@@ -535,11 +526,6 @@ namespace Trick {
         std::string get_user_cmd_string();
 
         /**
-         * Gets #user_cmd_string as a char*.
-         */
-        const char* get_user_cmd_string_c_str();
-
-        /**
          * Sets #custom_pre_text.
          */
         void set_custom_pre_text(std::string custom_pre_text);
@@ -550,11 +536,6 @@ namespace Trick {
         std::string get_custom_pre_text();
 
         /**
-         * Gets #custom_pre_text as a char*.
-         */
-        const char* get_custom_pre_text_c_str();
-
-        /**
          * Sets #custom_post_text.
          */
         void set_custom_post_text(std::string custom_post_text);
@@ -563,11 +544,6 @@ namespace Trick {
          * Gets #custom_post_text.
          */
         std::string get_custom_post_text();
-
-        /**
-         * Gets #custom_post_text as a char*.
-         */
-        const char* get_custom_post_text_c_str();
 
         /**
          * Sets #verbosity.
@@ -648,13 +624,6 @@ namespace Trick {
          * @param variable name to get
          */
         Trick::MonteVar * get_variable(std::string variable_name);
-
-        /**
-         * Gets the list of added variables.
-         *
-         * @return the current list of variables
-         */
-        const std::vector<Trick::MonteVar*>& get_variables();
 
         /**
          * Adds a new slave with the specified machine name.

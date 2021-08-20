@@ -6,25 +6,13 @@ a tutorial and examples.
 """
 
 from collections import namedtuple
+import itertools
 import os
 import re
 import socket
 import struct
 import threading
 import time
-
-# In Python 2, basestring is the parent for both str (ASCII) and unicode.
-# In Python 3, str and unicode were unified into str, and basestring is gone.
-try:
-    basestring
-except NameError:
-    basestring = str
-
-# In Python 3, itertools.izip became zip.
-try:
-    from itertools import izip as zip
-except ImportError:
-    pass
 
 class VariableServerError(Exception):
     '''
@@ -260,7 +248,7 @@ class VariableServer(object):
                     # Besides, it would be corrected with the next
                     # message.
                     if len(values) <= len(self._variables):
-                        for variable, value in zip(
+                        for variable, value in itertools.izip(
                           self._variables, values):
                             variable.value, variable.units = \
                               _parse_value(value)
@@ -472,7 +460,7 @@ class VariableServer(object):
         _assert_value_count(len(variables), len(values))
 
         # update each Variable, checking units conversions
-        for variable, entry in zip(variables, values):
+        for variable, entry in itertools.izip(variables, values):
             value, units = _parse_value(entry)
             if variable.units is not None:
                 _assert_units_conversion(variable.name, variable.units, units)
@@ -533,7 +521,7 @@ class VariableServer(object):
             # - appending to the variables list while
             #   update_variables is executing does not invalidate
             #   the length check
-            # - zip is bounded by the number of values, and the
+            # - izip is bounded by the number of values, and the
             #   length check ensures there are at least as many
             #   variables as values
             self._variables.append(variable)
@@ -568,11 +556,11 @@ class VariableServer(object):
         self._var_clear()
         # No lock is needed here because:
         # - This assignment is atomic.
-        # - If update_variables has already called zip, the list it is
+        # - If update_variables has already called izip, the list it is
         #   ierating over is unchanged as we're assigning a new list
         #   here instead of clearing the shared reference.
-        # - If update_variables has not yet called zip, when it does,
-        #   zip will return an empty generator, terminating the loop.
+        # - If update_variables has not yet called izip, when it does,
+        #   izip will return an empty generator, terminating the loop.
         self._variables = []
 
     def set_units(self, name, units):
@@ -764,7 +752,7 @@ class VariableServer(object):
             False to send values asynchronously on an independent
             thread.
         """
-        self.send('trick.var_set_write_mode({0})'.format(bool(enable)),
+        self.send('trick.var_set_copy_mode({0})'.format(bool(enable)),
                   self.Channel.ASYNC)
 
     def validate_addresses(self, validate=True, channel=Channel.BOTH):
@@ -829,30 +817,6 @@ class VariableServer(object):
         self.send('trick.exec_{0}()'
                   .format('freeze' if bool(freeze) else 'run'))
 
-    def checkpoint(self, filename):
-        """
-        Dump a checkpoint.
-
-        Parameters
-        ----------
-        filename : str
-            The checkpoint file name. The checkpoint will be saved in the
-            directory containing the sim's input file.
-        """
-        self.send('trick.checkpoint("' + filename + '")')
-
-    def load_checkpoint(self, filename):
-        """
-        Load a checkpoint. The path is relative to the directory containing
-        the sim's S_main executable.
-
-        Parameters
-        ----------
-        filename : str
-            The checkpoint file name.
-        """
-        self.send('trick.load_checkpoint("' + filename + '")')
-
     def enable_real_time(self, enable=True):
         """
         Toggle real-time execution.
@@ -896,7 +860,7 @@ class VariableServer(object):
           self.Channel.BOTH: [self._synchronous_socket,
                               self._asynchronous_socket]
         }[channel]:
-            channel.sendall(command.encode())
+            channel.sendall(command)
 
     def readline(self, synchronous_channel=True):
         """
@@ -905,16 +869,13 @@ class VariableServer(object):
         send and expect a response from the variable server. The newline
         character is stripped.
 
-        Parameters
-        ----------
-        synchronous_channel : bool
-            True to read from the synchronous channel.
-            False to read from the asynchronous channel.
-
         Returns
         -------
         Message
             The next available message.
+        synchronous_channel : bool
+            True to read from the synchronous channel.
+            False to read from the asynchronous channel.
 
         Raises
         ------
@@ -1016,56 +977,25 @@ class VariableServer(object):
         called after this one. A new connection can be established only
         by creating a new instance.
         """
-        # In Python 3, self._asynchronous_file_interface.close() hangs if
-        # shutdown isn't called first. Something to do with self._thread
-        # always blocking on a read from the asynchronous_socket. I suspect
-        # Python 3's new io module.
         self._open = False
-        self._synchronous_socket.shutdown(socket.SHUT_RDWR)
-        self._asynchronous_socket.shutdown(socket.SHUT_RDWR)
         self._synchronous_file_interface.close()
         self._asynchronous_file_interface.close()
+        self._synchronous_socket.shutdown(socket.SHUT_RDWR)
+        self._asynchronous_socket.shutdown(socket.SHUT_RDWR)
         self._synchronous_socket.close()
         self._asynchronous_socket.close()
         self._thread.join()
 
-    def __str__(self):
-        return 'VariableServer' + str(self._synchronous_socket.getpeername())
-
-def find_simulation(host=None, port=None, user=None, pid=None,
-                   version=None, sim_directory=None, s_main=None,
-                   input_file=None, tag=None, timeout=None):
+def from_pid(pid, timeout=None):
     """
-    Listen for simulations on the multicast channel over which all sims broadcast
-    their existence. Connect to the one that matches the provided arguments that
-    are not None.
-
-    If there are multiple matches, connect to the first one we happen to find.
-    If all arguments are None, connect to the first sim we happen to find.
-    Such matches will be non-deterministic.
+    Connect to the simulation at the given pid. This is done by
+    listening on the multicast channel over which all sims broadcast
+    their existance.
 
     Parameters
     ----------
-    host : str
-        Host name of the machine on which the sim is running as reported by
-        Trick.
-    port : int
-        Variable Server port.
-    user : str
-        Simulation process user.
     pid : int
         The sim's process ID.
-    version : str
-        Trick version.
-    sim_directory : str
-        SIM_* directory. If this starts with /, it will be considered an
-        absolute path.
-    s_main : str
-        Filename of the S_main* executable. Not an absolute path.
-    input_file : str
-        Path to the input file relative to the simDirectory.
-    tag : str
-        Simulation tag.
     timeout : positive float or None
         How long to look for the sim before giving up. Pass None to wait
         indefinitely.
@@ -1073,8 +1003,7 @@ def find_simulation(host=None, port=None, user=None, pid=None,
     Returns
     -------
     VariableServer
-        A VariableServer connected to the sim matching the specified
-        parameters.
+        A VariableServer connected to the sim at pid.
 
     Raises
     ------
@@ -1088,17 +1017,8 @@ def find_simulation(host=None, port=None, user=None, pid=None,
     sock.setsockopt(
       socket.IPPROTO_IP,
       socket.IP_ADD_MEMBERSHIP,
-      struct.pack('=4sl', socket.inet_aton('224.3.14.15'), socket.INADDR_ANY))
+      struct.pack("=4sl", socket.inet_aton('224.3.14.15'), socket.INADDR_ANY))
     file_interface = sock.makefile()
-
-    def candidate_matches(candidate):
-        for parameter, candidate_parameter in zip(
-          [host, port, user, pid, sim_directory,
-           s_main, input_file, version, tag],
-          candidate) :
-            if parameter is not None and str(parameter) != candidate_parameter:
-                return False
-        return True
 
     # the socket will clean itself up when it's garbage-collected
     while True:
@@ -1109,22 +1029,9 @@ def find_simulation(host=None, port=None, user=None, pid=None,
             clock = time.time()
             sock.settimeout(timeout)
 
-        # 0: host
-        # 1: port
-        # 2: user
-        # 3: pid
-        # 4: SIM_*
-        # 5: S_main*
-        # 6: RUN_*
-        # 7: version
-        # 8: tag
-        candidate = file_interface.readline().split('\t')[:9]
-
-        if not str(sim_directory).startswith('/'):
-            candidate[4] = os.path.basename(candidate[4])
-
-        if candidate_matches(candidate):
-            return VariableServer(candidate[0], candidate[1])
+        host, port, _, process_id = file_interface.readline().split('\t')[:4]
+        if int(process_id) == int(pid):
+            return VariableServer(host, port)
 
 def _parse_value(text):
     """

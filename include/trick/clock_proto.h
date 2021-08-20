@@ -6,14 +6,13 @@
 extern "C" {
 #endif
 
-long long clock_time(void) ;
-long long clock_wall_time(void) ;
+long long clock_time() ;
+long long clock_wall_time() ;
 long long clock_reset(long long ref) ;
 int clock_spin(long long ref) ;
 int clock_set_reference(long long ref) ;
-double clock_get_rt_clock_ratio(void) ;
+double clock_get_rt_clock_ratio() ;
 int clock_set_rt_clock_ratio(double in_rt_clock_ratio) ;
-unsigned long long clock_tics_per_sec(void) ;
 
 #ifdef __cplusplus
 }

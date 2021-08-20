@@ -7,7 +7,7 @@
 include ${TRICK_HOME}/share/trick/makefiles/Makefile.common
 
 # Flags passed to the preprocessor.
-TRICK_CPPFLAGS += -I${GTEST_HOME}/include -I$(TRICK_HOME)/include -g -Wall -Wextra -DGTEST_HAS_TR1_TUPLE=0 ${TRICK_SYSTEM_CXXFLAGS}
+TRICK_CPPFLAGS += -I${GTEST_HOME}/include -I$(TRICK_HOME)/include -g -Wall -Wextra -DGTEST_HAS_TR1_TUPLE=0
 
 TRICK_LIBS = ${TRICK_LIB_DIR}/libtrick_units.a
 TRICK_EXEC_LINK_LIBS += -L${GTEST_HOME}/lib64 -L${GTEST_HOME}/lib -lgtest -lgtest_main
@@ -33,23 +33,23 @@ clean :
 	rm -rf XMLtestReports
 
 UnitTestSuite.o : UnitTestSuite.cpp
-	$(TRICK_CXX) $(TRICK_CPPFLAGS) -c $<
+	$(TRICK_CPPC) $(TRICK_CPPFLAGS) -c $<
 
 UnitTestSuite : UnitTestSuite.o
 	@echo 'Building UnitTestSuite'
-	$(TRICK_CXX) $(TRICK_SYSTEM_LDFLAGS) -o $@ $^ $(OTHER_OBJECTS) -L${TRICK_HOME}/lib_${TRICK_HOST_CPU} $(TRICK_LIBS) $(TRICK_EXEC_LINK_LIBS)
+	$(TRICK_CPPC) $(TRICK_SYSTEM_LDFLAGS) -o $@ $^ $(OTHER_OBJECTS) -L${TRICK_HOME}/lib_${TRICK_HOST_CPU} $(TRICK_LIBS) $(TRICK_EXEC_LINK_LIBS)
 
 UnitConvTestSuite.o : UnitConvTestSuite.cpp
-	$(TRICK_CXX) $(TRICK_CPPFLAGS) -c $<
+	$(TRICK_CPPC) $(TRICK_CPPFLAGS) -c $<
 
 UnitConvTestSuite : UnitConvTestSuite.o
 	@echo 'Building UnitConvTestSuite'
-	$(TRICK_CXX) $(TRICK_SYSTEM_LDFLAGS) -o $@ $^ $(OTHER_OBJECTS) -L${TRICK_HOME}/lib_${TRICK_HOST_CPU} $(TRICK_LIBS) $(TRICK_EXEC_LINK_LIBS)
+	$(TRICK_CPPC) $(TRICK_SYSTEM_LDFLAGS) -o $@ $^ $(OTHER_OBJECTS) -L${TRICK_HOME}/lib_${TRICK_HOST_CPU} $(TRICK_LIBS) $(TRICK_EXEC_LINK_LIBS)
 
 #TestSuite3.o : UnitTestSuite3.cpp
-#	$(TRICK_CXX) $(TRICK_CPPFLAGS) -c $<
+#	$(TRICK_CPPC) $(TRICK_CPPFLAGS) -c $<
 
 #UnitTestSuite3 : UnitTestSuite3.o
 #	echo "GTEST_HOME  = " ${GTEST_HOME}
-#	$(TRICK_CXX) $(TRICK_SYSTEM_LDFLAGS) -o $@ $^ $(OTHER_OBJECTS) -L${TRICK_HOME}/lib_${TRICK_HOST_CPU} $(TRICK_LIBS) $(TRICK_EXEC_LINK_LIBS)
+#	$(TRICK_CPPC) $(TRICK_SYSTEM_LDFLAGS) -o $@ $^ $(OTHER_OBJECTS) -L${TRICK_HOME}/lib_${TRICK_HOST_CPU} $(TRICK_LIBS) $(TRICK_EXEC_LINK_LIBS)
 

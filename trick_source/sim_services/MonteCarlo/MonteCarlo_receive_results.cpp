@@ -27,10 +27,10 @@ void Trick::MonteCarlo::receive_results() {
         }
 
         /**
-         * <li> If the slave is in the MC_INITIALIZING state, it is sending us the
+         * <li> If the slave is in the INITIALIZING state, it is sending us the
          * machine name and port over which it is listening for new runs.
          */
-        if (slave->state == MonteSlave::MC_INITIALIZING) {
+        if (slave->state == MonteSlave::INITIALIZING) {
             handle_initialization(*slave);
         }
         /** <li> Otherwise, it's sending us run data. */
@@ -41,7 +41,7 @@ void Trick::MonteCarlo::receive_results() {
 }
 
 void Trick::MonteCarlo::handle_initialization(Trick::MonteSlave& slave) {
-        if (verbosity >= MC_ALL) {
+        if (verbosity >= ALL) {
             message_publish(
               MSG_INFO,
               "Monte [Master] Receiving initialization information from %s:%d.\n",
@@ -70,12 +70,12 @@ void Trick::MonteCarlo::handle_initialization(Trick::MonteSlave& slave) {
         }
         slave.port = ntohl(slave.port);
 
-        slave.state = MonteSlave::MC_READY;
+        slave.state = MonteSlave::READY;
         tc_disconnect(&connection_device);
 }
 
 void Trick::MonteCarlo::handle_run_data(Trick::MonteSlave& slave) {
-    if (verbosity >= MC_INFORMATIONAL) {
+    if (verbosity >= INFORMATIONAL) {
         message_publish(MSG_INFO, "Monte [Master] Receiving results for run %d from %s:%d.\n",
              slave.current_run->id, slave.machine_name.c_str(), slave.id) ;
     }
@@ -92,12 +92,12 @@ void Trick::MonteCarlo::handle_run_data(Trick::MonteSlave& slave) {
      * this slave was marked as having timed out. If that is the case,
      * discard these results.
      */
-    if (slave.current_run->exit_status != MonteRun::MC_RUN_INCOMPLETE) {
+    if (slave.current_run->exit_status != MonteRun::INCOMPLETE) {
         // TODO: If a slave times out or core dumps in it's monte_slave_post
-        // jobs, the master will receive a MC_RUN_COMPLETE status from the slave's
+        // jobs, the master will receive a COMPLETE status from the slave's
         // child process and then an error status from the parent, rendering
         // this message incorrect.
-        if (verbosity >= MC_ALL) {
+        if (verbosity >= ALL) {
             message_publish(
               MSG_INFO,
               "Monte [Master] Run %d has already been resolved. Discarding results.\n",
@@ -118,85 +118,84 @@ void Trick::MonteCarlo::handle_run_data(Trick::MonteSlave& slave) {
 
     switch (exit_status) {
 
-        case MonteRun::MC_RUN_COMPLETE:
-        case MonteRun::MC_RUN_FAILED:
-            resolve_run(slave, static_cast<MonteRun::ExitStatus>(exit_status));
+        case MonteRun::COMPLETE:
+            resolve_run(slave, MonteRun::COMPLETE);
             run_queue(&master_post_queue, "in master_post queue") ;
             break;
 
-        case MonteRun::MC_PROBLEM_PARSING_INPUT:
-            if (verbosity >= MC_ERROR) {
+        case MonteRun::BAD_INPUT:
+            if (verbosity >= ERROR) {
                 message_publish(
                   MSG_ERROR,
                   "Monte [Master] %s:%d reported bad input for run %d. Skipping.\n",
                   slave.machine_name.c_str(), slave.id, slave.current_run->id) ;
             }
-            resolve_run(slave, MonteRun::MC_PROBLEM_PARSING_INPUT);
+            resolve_run(slave, MonteRun::BAD_INPUT);
             break;
 
-        case MonteRun::MC_RUN_DUMPED_CORE:
-            if (verbosity >= MC_ERROR) {
+        case MonteRun::CORED:
+            if (verbosity >= ERROR) {
                 message_publish(
                   MSG_ERROR,
                   "Monte [Master] %s:%d reported core dump for run %d. Skipping.\n",
                   slave.machine_name.c_str(), slave.id, slave.current_run->id) ;
             }
-            resolve_run(slave, MonteRun::MC_RUN_DUMPED_CORE);
+            resolve_run(slave, MonteRun::CORED);
             break;
 
-        case MonteRun::MC_CANT_CREATE_OUTPUT_DIR:
-            if (verbosity >= MC_ERROR) {
+        case MonteRun::NO_PERM:
+            if (verbosity >= ERROR) {
                 message_publish(
                   MSG_ERROR,
                   "Monte [Master] %s:%d reported a failure to create output directories for run %d.\n",
                   slave.machine_name.c_str(), slave.id, slave.current_run->id);
             }
-            handle_retry(slave, MonteRun::MC_CANT_CREATE_OUTPUT_DIR);
+            handle_retry(slave, MonteRun::NO_PERM);
             break;
 
         /**
-         * <li> Timeouts are redispatched. However, we must first check to
+         * <li> Timeouts and are redispatched. However, we must first check to
          * see if this run has already been processed in #check_timeouts, which
          * can occur when the master determines that a slave has timed out, and
          * then that slave itself reports a timeout. </ul>
          */
-        case MonteRun::MC_RUN_TIMED_OUT:
-            if (verbosity >= MC_ERROR) {
+        case MonteRun::TIMEDOUT:
+            if (verbosity >= ERROR) {
                 message_publish(
                   MSG_ERROR,
                   "Monte [Master] %s:%d reported a timeout for run %d.\n",
                   slave.machine_name.c_str(), slave.id, slave.current_run->id);
             }
-            if (slave.state != MonteSlave::MC_UNRESPONSIVE_RUNNING &&
-                slave.state != MonteSlave::MC_UNRESPONSIVE_STOPPING) {
-                handle_retry(slave, MonteRun::MC_RUN_TIMED_OUT);
+            if (slave.state != MonteSlave::UNRESPONSIVE_RUNNING &&
+                slave.state != MonteSlave::UNRESPONSIVE_STOPPING) {
+                handle_retry(slave, MonteRun::TIMEDOUT);
             }
             break;
 
         default:
-            if (verbosity >= MC_ERROR) {
+            if (verbosity >= ERROR) {
                 message_publish(
                   MSG_ERROR,
                   "Monte [Master] %s:%d reported unrecognized exit status (%d) for run %d. Skipping.\n",
                   slave.machine_name.c_str(), slave.id, exit_status, slave.current_run->id);
             }
-            resolve_run(slave, MonteRun::MC_UNRECOGNIZED_RETURN_CODE);
+            resolve_run(slave, MonteRun::UNKNOWN);
             break;
     }
 
     tc_disconnect(&connection_device);
 
     /** <li> Update the slave's state. */
-    if (slave.state == MonteSlave::MC_RUNNING || slave.state == MonteSlave::MC_UNRESPONSIVE_RUNNING) {
-        slave.state = MonteSlave::MC_READY;
-    } else if (slave.state == MonteSlave::MC_STOPPING || slave.state == MonteSlave::MC_UNRESPONSIVE_STOPPING) {
-        slave.state = MonteSlave::MC_STOPPED;
+    if (slave.state == MonteSlave::RUNNING || slave.state == MonteSlave::UNRESPONSIVE_RUNNING) {
+        slave.state = MonteSlave::READY;
+    } else if (slave.state == MonteSlave::STOPPING || slave.state == MonteSlave::UNRESPONSIVE_STOPPING) {
+        slave.state = MonteSlave::STOPPED;
     }
 }
 
 void Trick::MonteCarlo::set_disconnected_state(Trick::MonteSlave& slave) {
-    slave.state = Trick::MonteSlave::MC_DISCONNECTED;
-    if (verbosity >= MC_ERROR) {
+    slave.state = Trick::MonteSlave::DISCONNECTED;
+    if (verbosity >= ERROR) {
         message_publish(MSG_ERROR, "Monte [Master] Lost connection to %s:%d.\n",
                         slave.machine_name.c_str(), slave.id) ;
     }

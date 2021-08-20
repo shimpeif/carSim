@@ -29,13 +29,6 @@ extern "C" void set_integ_time(double time_value) {
     trick_curr_integ->time = time_value;
 }
 
-extern "C" void reset_state() {
-#ifdef USE_ER7_UTILS_INTEGRATORS
-#else
-    trick_curr_integ->state_reset();
-#endif
-}
-
 extern "C" void load_state(double* arg1, ... ) {
     va_list argp;
     if (trick_curr_integ != NULL) {
@@ -56,18 +49,6 @@ extern "C" void load_indexed_state(unsigned int index , double state) {
        message_publish(MSG_ERROR, "Integ load_indexed_state ERROR: trick_curr_integ is not set.\n") ;
     }
 }
-
-#ifndef USE_ER7_UTILS_INTEGRATORS
-// Warning: state_p should never point to an automatic local variable.
-extern "C" void load_state_element(unsigned int index , double* state_p) {
-
-    if (trick_curr_integ != NULL) {
-        trick_curr_integ->state_element_in (index, state_p);
-    } else {
-       message_publish(MSG_ERROR, "Integ load_indexed_state ERROR: trick_curr_integ is not set.\n") ;
-    }
-}
-#endif
 
 extern "C" void load_deriv( double* arg1, ...) {
 

@@ -58,18 +58,12 @@ class PrintAttributes {
         /** Prints an enum to the io_src file */
         virtual void printEnum( EnumValues * in_enum) ;
 
-        /** Prints a class to the XML resource file */
-        void printSieClass( ClassValues * cv ) ;
-
-        /** Prints an enum to the XML resource file */
-        void printSieEnum( EnumValues * ev ) ;
-
         bool isHeaderExcluded(const std::string& header, bool exclude_ext_libs = true);
         void markHeaderAsVisited(const std::string& header);
 
     protected:
 
-        const bool verboseBuild = (getenv("TRICK_VERBOSE_BUILD") || getenv("VERBOSE"));
+        const bool verboseBuild = getenv("TRICK_VERBOSE_BUILD");
         const std::string skipping = color(SKIP, "ICG Skip   ");
 
         /** Directory to put class and enum map files */
@@ -107,6 +101,7 @@ class PrintAttributes {
 
         bool openIOFile(const std::string& header_file_name) ;
 
+        bool isFileIncluded(std::string header_file_name) ;
         bool isIOFileOutOfDate(std::string header_file_name, std::string io_file_name ) ;
         bool hasBeenProcessed(EnumValues& enumValues);
         bool hasBeenProcessed(ClassValues& classValues);

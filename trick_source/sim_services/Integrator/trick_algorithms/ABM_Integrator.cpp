@@ -11,11 +11,6 @@ void Trick::ABM_Integrator::initialize(int State_size, double Dt) {
     dt = Dt;
     num_state = State_size;
 
-    state_origin =  INTEG_ALLOC( double*, num_state );
-    for(i=0; i<num_state ; i++) {
-        state_origin[i] = (double*)NULL;
-    }
-
     /** Allocate the state vector.*/
     state =  INTEG_ALLOC( double, num_state );
 
@@ -50,8 +45,6 @@ Trick::ABM_Integrator::ABM_Integrator(int State_size, double Dt) {
 Trick::ABM_Integrator::~ABM_Integrator() {
 
     int i;
-
-    if (state_origin) INTEG_FREE(state_origin);
 
     if (state) INTEG_FREE(state);
 

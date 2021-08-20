@@ -15,11 +15,6 @@ void Trick::Euler_Integrator::initialize(int State_size, double Dt) {
     dt = Dt;
     num_state = State_size;
 
-    state_origin =  INTEG_ALLOC( double*, num_state );
-    for(int i=0; i<num_state ; i++) {
-        state_origin[i] = (double*)NULL;
-    }
-
     /** Allocate the state vector.*/
     state = INTEG_ALLOC( double, num_state );
 
@@ -45,7 +40,6 @@ Trick::Euler_Integrator::Euler_Integrator(int State_size, double Dt) {
  */
 Trick::Euler_Integrator::~Euler_Integrator() {
 
-    if (state_origin) INTEG_FREE(state_origin);
     if (state) INTEG_FREE(state);
     if (deriv[0]) INTEG_FREE(deriv[0]);
     if (deriv) INTEG_FREE(deriv);

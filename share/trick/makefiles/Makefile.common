@@ -1,49 +1,32 @@
-SHELL    := /bin/bash
-CD       := cd
-MV       := /bin/mv
-RM       := /bin/rm
-CP       := /bin/cp
-MAKE_OUT := $(abspath build/MAKE_out)
-MAKE_ERR := $(abspath build/MAKE_err)
+SHELL := /bin/bash
+CD    := cd
+MV    := /bin/mv
+RM    := /bin/rm
+CP    := /bin/cp
+PWD   = $(shell /bin/pwd)
 
-PWD       = $(shell /bin/pwd)
-COLOR     = [34m$(1)[0m
+export TRICK_HOME := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../../..)
 
-ifdef VERBOSE
-    TRICK_VERBOSE_BUILD := 1
+COLOR   = [34m$(1)[0m
+
+ifndef TRICK_VERBOSE_BUILD
+    ECHO_CMD = @
 endif
 
-ifdef TRICK_VERBOSE_BUILD
-    ECHO_TO_TERMINAL = @echo '$1'
-endif
-
-define ECHO_AND_LOG
-$(call ECHO_TO_TERMINAL, $1)
-@echo '$1' >> $(MAKE_OUT)
-@$1 > >($(TEE) -a $(MAKE_OUT)) 2> >($(TEE) -a $(MAKE_ERR) >&2)
-endef
-
-export TRICK_HOME      := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../../..)
 export TRICK_HOST_TYPE := $(shell  $(TRICK_HOME)/bin/trick-gte TRICK_HOST_TYPE)
 export TRICK_VERSION   := $(shell  $(TRICK_HOME)/bin/trick-version -v)
 export TRICK_MAJOR     := $(shell  $(TRICK_HOME)/bin/trick-version -y)
 export TRICK_MINOR     := $(shell  $(TRICK_HOME)/bin/trick-version -m)
 
--include $(TRICK_HOME)/share/trick/makefiles/config_user.mk
 include $(TRICK_HOME)/share/trick/makefiles/config_${TRICK_HOST_TYPE}.mk
+-include $(TRICK_HOME)/share/trick/makefiles/config_user.mk
 
 ifndef TRICK_CC
     export TRICK_CC := $(CC)
 endif
 
-# TODO: Remove support for TRICK_CPPC in 2021
-ifdef TRICK_CPPC
-    $(warning TRICK_CPPC is deprecated, use TRICK_CXX instead)
-    export TRICK_CXX := $(TRICK_CPPC)
-endif
-
-ifndef TRICK_CXX
-    export TRICK_CXX := $(CXX)
+ifndef TRICK_CPPC
+    export TRICK_CPPC := $(CXX)
 endif
 
 ifndef TRICK_LD
@@ -63,13 +46,11 @@ export TRICK_SWIG_EXCLUDE := $(TRICK_SWIG_EXCLUDE)
 export TRICK_EXT_LIB_DIRS := $(TRICK_EXT_LIB_DIRS)
 export TRICK_PYTHON_PATH := $(TRICK_PYTHON_PATH)
 export TRICK_GTE_EXT := $(TRICK_GTE_EXT)
-export TRICK_HOST_CPU := $(shell TRICK_FORCE_32BIT=$(TRICK_FORCE_32BIT) $(TRICK_HOME)/bin/trick-gte TRICK_HOST_CPU)
+export TRICK_HOST_CPU := $(shell $(TRICK_HOME)/bin/trick-gte TRICK_HOST_CPU)
 export TRICK_EXEC_LINK_LIBS := ${PTHREAD_LIBS} $(PYTHON_LIB) $(UDUNITS_LDFLAGS) $(PLATFORM_LIBS) -lm -ldl
 export TRICK_LIBS := ${RPATH} -L${TRICK_LIB_DIR} -ltrick -ltrick_pyip -ltrick_comm -ltrick_math -ltrick_units -ltrick_mm
 export TRICK_SYSTEM_LDFLAGS := $(TRICK_SYSTEM_LDFLAGS)
-export TRICK_SWIG_FLAGS := $(TRICK_SWIG_FLAGS)
-export TRICK_SWIG_CFLAGS := $(TRICK_SWIG_CFLAGS)
-export TRICK_CONVERT_SWIG_FLAGS := $(TRICK_CONVERT_SWIG_FLAGS)
+export SWIG_FLAGS := $(SWIG_FLAGS)
 
 IO_SRC_DIR       := io_src/
 OBJ_DIR          := object_${TRICK_HOST_CPU}
@@ -90,7 +71,7 @@ else
     LIBEXEC = lib
 endif
 
-TRICK_INCLUDES := -isystem${TRICK_HOME}/trick_source -isystem${TRICK_HOME}/include -isystem${TRICK_HOME}/include/trick/compat
+TRICK_INCLUDES := -I${TRICK_HOME}/trick_source -I${TRICK_HOME}/include -I${TRICK_HOME}/include/trick/compat
 TRICK_VERSIONS := -DTRICK_VER=$(TRICK_MAJOR) -DTRICK_MINOR=$(TRICK_MINOR)
 
 export TRICK_SYSTEM_CXXFLAGS := $(TRICK_INCLUDES) $(TRICK_VERSIONS) -fpic $(UDUNITS_INCLUDES)
@@ -101,16 +82,6 @@ ifeq ($(HAVE_ZEROCONF),1)
     TRICK_SYSTEM_CXXFLAGS += -DHAVE_ZEROCONF
 endif
 
-ifeq ($(USE_ER7_UTILS),ON)
-    ER7_UTILS_HOME := $(TRICK_HOME)/trick_source/er7_utils
-    TRICK_SYSTEM_CXXFLAGS += -DUSE_ER7_UTILS_INTEGRATORS
-    TRICK_LIBS += -ler7_utils
-    ifneq ($(wildcard ${ER7_UTILS_HOME}/CheckpointHelper),)
-        USE_ER7_UTILS_CHECKPOINTHELPER = 1
-        TRICK_SYSTEM_CXXFLAGS += -DUSE_ER7_UTILS_CHECKPOINTHELPER
-   endif
-endif
-# older test, remove when cmake is only build system
 ifeq ($(USE_ER7_UTILS), 1)
     ER7_UTILS_HOME := $(TRICK_HOME)/trick_source/er7_utils
     TRICK_SYSTEM_CXXFLAGS += -DUSE_ER7_UTILS_INTEGRATORS
@@ -121,13 +92,6 @@ ifeq ($(USE_ER7_UTILS), 1)
    endif
 endif
 
-ifeq ($(TRICK_FORCE_32BIT),ON)
-   TRICK_ICGFLAGS += -m32
-   TRICK_SYSTEM_CXXFLAGS += -m32
-   TRICK_SYSTEM_LDFLAGS  += -m32
-   LD_PARTIAL            += -melf_i386
-endif
-# older test, remove when cmake is only build system
 ifeq ($(TRICK_FORCE_32BIT), 1)
    TRICK_ICGFLAGS += -m32
    TRICK_SYSTEM_CXXFLAGS += -m32
@@ -135,7 +99,7 @@ ifeq ($(TRICK_FORCE_32BIT), 1)
    LD_PARTIAL            += -melf_i386
 endif
 
-IS_CC_CLANG = $(shell ${TRICK_CXX} -xc /dev/null -dM -E | grep -c __clang__)
+IS_CC_CLANG = $(shell ${TRICK_CPPC} -xc /dev/null -dM -E | grep -c __clang__)
 ifeq ($(IS_CC_CLANG), 1)
    TRICK_SYSTEM_CXXFLAGS += -fcolor-diagnostics
 else
@@ -171,15 +135,6 @@ ifneq ($(GSL_HOME),)
     TRICK_SYSTEM_CXXFLAGS += -D_HAVE_GSL
 endif
 
-TRICK_CIVET=0
-ifneq (${TRICK_DISABLE_CIVET},1)
-    TRICK_CIVET=1
-    TRICK_LIBS += ${TRICK_LIB_DIR}/libcivetweb.a ${TRICK_LIB_DIR}/libtrickCivet.a
-    TRICK_SWIG_FLAGS += -DUSE_CIVET
-    TRICK_SYSTEM_CXXFLAGS += -DUSE_CIVET
-    TRICK_ICG_EXCLUDE += ${TRICK_HOME}/include/civet
-endif
-
 # We pipe the output of compiler through tee.  If the user wanted gcc color, make sure they get it.
 ifdef GCC_COLORS
     TRICK_SYSTEM_CXXFLAGS += -fdiagnostics-color=always
@@ -192,8 +147,8 @@ export TRICK_SYSTEM_CFLAGS := $(TRICK_SYSTEM_CXXFLAGS) -fexceptions
 TRICK_SYSTEM_CFLAGS   += $(TRICK_ADDITIONAL_CFLAGS)
 TRICK_SYSTEM_CXXFLAGS += $(TRICK_ADDITIONAL_CXXFLAGS)
 
-TRICK_INCLUDE  = $(shell $(PERL) -e '@inc_paths = "${TRICK_CFLAGS}" =~ /-(?:I|isystem)\s*(\S+)/g ; foreach $$i (@inc_paths) { print "-I$$i " if (-e $$i and $$i ne "/usr/include")}') \
-                 $(shell $(PERL) -e '@inc_paths = "${TRICK_SYSTEM_CFLAGS}" =~ /-(?:I|isystem)\s*(\S+)/g ; foreach $$i (@inc_paths) { print "-I$$i " if (-e $$i)}')
+TRICK_INCLUDE  = $(shell $(PERL) -e '@inc_paths = "${TRICK_CFLAGS}" =~ /-I\s*(\S+)/g ; foreach $$i (@inc_paths) { print "-I$$i " if (-e $$i and $$i ne "/usr/include")}') \
+                 $(shell $(PERL) -e '@inc_paths = "${TRICK_SYSTEM_CFLAGS}" =~ /-I\s*(\S+)/g ; foreach $$i (@inc_paths) { print "-I$$i " if (-e $$i)}')
 
 TRICK_DEFINES  = $(shell $(PERL) -e '@defines = "${TRICK_CFLAGS}" =~ /-D\s*(\S+)/g ; foreach $$i (@defines) { print "-D$$i "}') \
                  $(shell $(PERL) -e '@defines = "${TRICK_SYSTEM_CFLAGS}" =~ /-D\s*(\S+)/g ; foreach $$i (@defines) { print "-D$$i "}')

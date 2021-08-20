@@ -4,8 +4,6 @@
 
 TRICK_HOME := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../..)
 
-TRICK_CXXFLAGS += -std=c++11
-
 include ${TRICK_HOME}/share/trick/makefiles/Makefile.common
 
 LIB_DIR = lib_${TRICK_HOST_CPU}
@@ -15,13 +13,12 @@ LIBDIRS = Var \
     EQParse \
     units
 
-ifeq ($(USE_X_WINDOWS),1)
 ifneq ("$(wildcard fermi-ware)","")
 LIBDIRS += fermi-ware
 endif
-endif
 
 APPDIRS = DPX \
+    Apps/trkConvert \
     Apps/Trk2csv \
     Apps/ExternalPrograms
 

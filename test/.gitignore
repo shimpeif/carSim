@@ -13,6 +13,7 @@ CP_out
 MAKE_out
 Makefile_sim
 Makefile_swig
+S_default.dat
 S_document.xml
 S_library_list
 S_main_*
@@ -20,8 +21,6 @@ S_sie.resource
 S_source.cpp
 S_source.hh
 T_main_*
-.trick
-trick.zip
+trick
 jitlib
 build
-S_sie.json

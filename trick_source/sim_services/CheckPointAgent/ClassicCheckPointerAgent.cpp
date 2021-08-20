@@ -116,7 +116,7 @@ void Trick::ClassicCheckPointAgent::write_decl(std::ostream& chkpnt_os, ALLOC_IN
 
     if ( info->num_index == 0 ) {
 
-        chkpnt_os << type_spec << " " << info->name << ";\n";
+        chkpnt_os << type_spec << " " << info->name << ";" << std::endl;
 
     } else if ((info->num_index > 0) && (info->num_index <= TRICK_MAX_INDEX)) {
         int ii;
@@ -259,10 +259,6 @@ static char *getCompositeSubReference(
                 // Calculate the array indices for the right-side.
                 for (j = num_fixed_dims - 1; j >= 0; j--) {
                     size *= A[i].index[j].size;
-                    if(!size) {
-                      std::cerr << "Checkpoint Agent " << __FUNCTION__ << " ERROR: divide by zero during array indices calculation" << std::endl;
-                      return NULL;
-                    }
                     my_index[j] = (int) ((offset % size) / last_size);
                     offset -= last_size * my_index[j];
                     last_size = size;
@@ -617,9 +613,8 @@ void Trick::ClassicCheckPointAgent::write_singleton( std::ostream& chkpnt_os, vo
                     src_addr = (char*)address + offset * sizeof(short);
                     value =  *(short*)src_addr;
                 } else {
-                    std::cerr << __FUNCTION__ << ": enumeration size error." << std::endl;
+                    std::cerr << __FUNCTION__ << " enumeration size error." << std::endl;
                     std::cerr.flush();
-                    value = -1;
                 }
 
                 enum_attr = (ENUM_ATTR*)attr->attr;
@@ -978,7 +973,7 @@ void Trick::ClassicCheckPointAgent::write_rvalue( std::ostream& chkpnt_os, void*
 
                     array_len = attr->index[curr_dim].size ;
 
-                    chkpnt_os << "\n";
+                    chkpnt_os << std::endl;
 
                     for (ii=0 ; ii < curr_dim+1 ; ii++) {
                         chkpnt_os << "    ";
@@ -993,7 +988,7 @@ void Trick::ClassicCheckPointAgent::write_rvalue( std::ostream& chkpnt_os, void*
                             // Conditionally line-break and indent.
                             if (( (ii+1) % array_elements_per_line[attr->type]) == 0 ) {
                                 // Line-break.
-                                chkpnt_os << "\n";
+                                chkpnt_os << std::endl;
                                 // Indent.
                                 for (jj=0 ; jj < curr_dim+1 ; jj++) {
                                     chkpnt_os << "    ";
@@ -1011,7 +1006,7 @@ void Trick::ClassicCheckPointAgent::write_rvalue( std::ostream& chkpnt_os, void*
 
                 int ii;
 
-                chkpnt_os << "\n";
+                chkpnt_os << std::endl;
                 for (ii=0 ; ii < curr_dim+1 ; ii++) {
                     chkpnt_os << "    ";
                 }
@@ -1024,7 +1019,7 @@ void Trick::ClassicCheckPointAgent::write_rvalue( std::ostream& chkpnt_os, void*
                     write_rvalue( chkpnt_os, address, attr, curr_dim + 1, offset * attr->index[curr_dim].size + ii);
                 }
 
-                chkpnt_os << "\n";
+                chkpnt_os << std::endl;
 
                 for (ii=0 ; ii < curr_dim+1 ; ii++) {
                     chkpnt_os << "    " ;

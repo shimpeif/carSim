@@ -1,6 +1,0 @@
-*venv
-.vscode/*
-*.pem
-*.key
-*.crt
-*.csr

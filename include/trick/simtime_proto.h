@@ -8,13 +8,13 @@
 extern "C" {
 #endif
 
-double get_rettime(void) ;
-double get_gmttime(void) ;
-double get_mettime(void) ;
+double get_rettime() ;
+double get_gmttime() ;
+double get_mettime() ;
 
-GMTTIME * get_rettime_struct(void) ;
-GMTTIME * get_gmttime_struct(void) ;
-GMTTIME * get_mettime_struct(void) ;
+GMTTIME * get_rettime_struct() ;
+GMTTIME * get_gmttime_struct() ;
+GMTTIME * get_mettime_struct() ;
 
 #ifdef __cplusplus
 }

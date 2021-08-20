@@ -172,7 +172,7 @@ bool CXXRecordVisitor::VisitCXXRecordDecl( clang::CXXRecordDecl *rec ) {
         // Test all constructors to see if any of those are the default and public
         clang::CXXRecordDecl::ctor_iterator cit ;
         for ( cit = rec->ctor_begin() ; cit != rec->ctor_end() ; cit++ ) {
-            if ( ( !(*cit)->isDeleted() ) and (*cit)->isDefaultConstructor() and (*cit)->getAccess() == clang::AS_public ) {
+            if ( (*cit)->isDefaultConstructor() and (*cit)->getAccess() == clang::AS_public ) {
                 cval.setHasDefaultConstructor(true) ;
             }
         }
@@ -348,8 +348,8 @@ bool CXXRecordVisitor::isPrivateEmbeddedClass( std::string in_name ) {
         in_name.erase(in_name.find_first_of("[*")) ;
     }
     // remove trailing spaces
-    in_name.erase(std::find_if(in_name.rbegin(), in_name.rend(), 
-        [](int c) {return !std::isspace(c);}).base(), in_name.end());
+    in_name.erase(std::find_if(in_name.rbegin(), in_name.rend(),
+     std::not1(std::ptr_fun<int, int>(std::isspace))).base(), in_name.end());
 
     // remove all template arguments "<text>"
     bool template_arg_found ;

@@ -13,7 +13,7 @@ sub gte (@) {
     my $ret ;
     my ( $system_type , $version , $major_ver , $gcc_version , $glibc_version ) ;
     my ( $machine_hardware ) ;
-    my (%gte , %def , %deprecated);
+    my (%gte , %def );
     my @externals ;
     my $search ;
     my $e ;
@@ -49,28 +49,28 @@ sub gte (@) {
                 # remove possible ccache from TRICK_CC
                 $temp =~ s/.*?ccache\s+// ;
                 if ( -e $temp ) {
-                    $ret = `$temp -dumpfullversion -dumpversion` ;
+                    $ret = `$temp -dumpversion` ;
                 }
                 else {
                     printf STDERR "[33mCannot find TRICK_CC = $temp, using /usr/bin/gcc\n" ;
-                    $ret = `/usr/bin/gcc -dumpfullversion -dumpversion` ;
+                    $ret = `/usr/bin/gcc -dumpversion` ;
                 }
             } else {
                 # remove possible ccache from TRICK_CC
                 my ($temp) = $ENV{TRICK_CC} ;
                 $temp =~ s/.*?ccache\s+// ;
-                $ret = `$temp --dumpfullversion dumpversion` ;
+                $ret = `$temp -dumpversion` ;
             }
         }
         else {
-            $ret = `gcc -dumpfullversion -dumpversion` ;
+            $ret = `gcc -dumpversion` ;
         }
-        ($gcc_version) = $ret =~ /(\d+(?:\.\d+)?)/ ;
+        ($gcc_version) = $ret =~ /(\d+\.\d+)/ ;
 
         if ( $system_type eq "Linux" ) {
             $def{"TRICK_HOST_CPU"} = $system_type . "_" . $gcc_version ;
             $machine_hardware = `uname -m` ;
-            if ( (! exists $ENV{"TRICK_FORCE_32BIT"} or $ENV{"TRICK_FORCE_32BIT"} == 0 or $ENV{"TRICK_FORCE_32BIT"} == "OFF" ) and $machine_hardware eq "x86_64\n") {
+            if ( (! exists $ENV{"TRICK_FORCE_32BIT"} or $ENV{"TRICK_FORCE_32BIT"} == 0) and $machine_hardware eq "x86_64\n") {
                 $def{"TRICK_HOST_CPU"} .= "_x86_64" ;
             }
         }
@@ -81,12 +81,11 @@ sub gte (@) {
     $def{"TRICK_CONVERT_SWIG_FLAGS"} = "" ;
     $def{"TRICK_CFLAGS"} = "" ;
     $def{"TRICK_CXXFLAGS"} = "" ;
-    $def{"TRICK_CPFLAGS"} = "" ;
-    $def{"TRICK_CXX"} = "c++" ;
+    $def{"TRICK_CPPC"} = "c++" ;
     $def{"TRICK_DEBUG"} = "0" ;
     $def{"TRICK_EDITOR"} = "" ;
     $def{"TRICK_EXEC_LINK_LIBS"} = "" ;
-    $def{"TRICK_FORCE_32BIT"} = "OFF" ;
+    $def{"TRICK_FORCE_32BIT"} = "0" ;
     $def{"TRICK_GTE_EXT"} = "" ;
     $def{"TRICK_HOME"} = "$trick_home" ;
     $def{"TRICK_HOST_CPU_USER_SUFFIX"} = "" ;
@@ -119,9 +118,6 @@ sub gte (@) {
         $gte{$_} = ( exists $ENV{$_} ) ? $ENV{$_} : $def{$_} ;
     }
  
-    #deprecated
-    $deprecated{"TRICK_CPPC"} =  $gte{"TRICK_CXX"};
-
     $gte{"TRICK_HOST_CPU"} .= $gte{"TRICK_HOST_CPU_USER_SUFFIX"} ;
 
     # Flip -g/-O in TRICK_CFLAGS according to TRICK_DEBUG if we are not asking for whole list
@@ -207,27 +203,19 @@ sub gte (@) {
                 if (exists $gte{$e}) {
                     $ret .= $gte{$e} . "\n" ;
                 }
-                elsif (exists $deprecated{$e}) {
-                    if ( $e eq "TRICK_CPPC" ) {
-                        warn "trick-gte warning: $e is deprecated, use TRICK_CXX\n";
-                    } else {
-                        warn "trick-gte warning: $e is deprecated\n";
-                    }
-                    $ret .= $deprecated{$e} . "\n" ;
-                }
                 elsif (exists $ENV{$e}) {
                     # print variable from environment if not a trick variable
                     $ret .= $ENV{$e} . "\n" ;
                 }
             }
         }
-
+        
         if ( $args[0] =~ /^-e(.*)/ ) {
             $search = $1 ;
             if ($search eq "") {
                 $search = $args[1] ;
             }
-
+                
             # print all variables in gte that match
             foreach $e (sort keys %gte) {
                 if ( $e =~ /$search/ ) {
@@ -241,12 +229,8 @@ sub gte (@) {
         foreach $e (sort keys %gte) {
             $ret .= $e . "=" . $gte{$e} . "\n" ;
         }
-        $ret .= "\nDeprecated\n" ;
-        foreach $e (sort keys %deprecated) {
-            $ret .= $e . "=" . $deprecated{$e} . "\n" ;
-        }
     }
-
+ 
     return $ret ;
 }
 

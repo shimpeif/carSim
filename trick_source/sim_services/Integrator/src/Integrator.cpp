@@ -19,9 +19,6 @@ Trick::Integrator::Integrator() {
    deriv = NULL;
    deriv2 = NULL;
    state_ws = NULL;
-#ifndef USE_ER7_UTILS_INTEGRATORS
-   state_origin = NULL;
-#endif
    time = 0.0;
    time_0 = 0.0;
    verbosity = 0 ;
@@ -88,59 +85,18 @@ int Trick::Integrator::integrate_2nd_order_ode (
     return rc;
 }
 
-void Trick::Integrator::state_reset () {
-#ifdef USE_ER7_UTILS_INTEGRATORS
-#else
-    if (intermediate_step == 0) {
-
-        if (verbosity) message_publish(MSG_DEBUG, "STATE RESET");
-        for (int i=0; i<num_state ; i++) {
-            *state_origin[i] = state[i];
-        }
-    }
-#endif
-}
-
-#ifdef USE_ER7_UTILS_INTEGRATORS
 void Trick::Integrator::state_in (double* arg1, va_list argp) {
     int i = 0;
     double* next_arg = arg1;
     if (verbosity) message_publish(MSG_DEBUG, "LOAD STATE: ");
-    while (next_arg != (double*) NULL) {
+    while (next_arg != (double*) NULL) { 
         state[i] = *next_arg;
-        if (verbosity) message_publish(MSG_DEBUG, "  %g", *next_arg);
+        if (verbosity) message_publish(MSG_DEBUG,"  %g", *next_arg);
         next_arg = va_arg(argp, double*);
         i++;
     }
-    if (verbosity) message_publish(MSG_DEBUG, "\n");
+    if (verbosity) message_publish(MSG_DEBUG,"\n");
 }
-#else
-void Trick::Integrator::state_in (double* arg1, va_list argp) {
-    if (intermediate_step == 0) {
-        int i = 0;
-        double* next_arg = arg1;
-        state_origin[i] = next_arg;
-        if (verbosity) std::cout << "LOAD STATE: \n";
-        while (next_arg != (double*) NULL) {
-            state_origin[i] = next_arg;
-            state[i] = *next_arg;
-            if (verbosity) std::cout << "  " << *next_arg << "\n";
-            next_arg = va_arg(argp, double*);
-            i++;
-        }
-        state_origin[i] = (double*)NULL;
-        if (verbosity) std::cout << std::endl;
-    }
-}
-
-void Trick::Integrator::state_element_in (unsigned int index , double* state_p) {
-    if (intermediate_step == 0) {
-        state_origin[index] = state_p;
-        state[index] = *state_p;
-    }
-}
-
-#endif
 
 void Trick::Integrator::state_in (double* arg1, ...) {
     va_list argp;

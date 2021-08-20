@@ -1,6 +1,5 @@
 
 #include <netdb.h>
-#include <iostream>
 #include "trick/VariableServer.hh"
 #include "trick/tc_proto.h"
 
@@ -16,26 +15,6 @@ Trick::VariableServer::VariableServer() :
 }
 
 Trick::VariableServer::~VariableServer() {
-}
-
-std::ostream& Trick::operator<< (std::ostream& s, Trick::VariableServer& vs) {
-    std::map < pthread_t , VariableServerThread * >::iterator it ;
-
-    s << "{\"variable_server_connections\":[\n";
-    int count = 0;
-    int n_connections = (int)vs.var_server_threads.size();
-    for ( it = vs.var_server_threads.begin() ; it != vs.var_server_threads.end() ; it++ ) {
-        s << "{\n";
-        s << *(*it).second;
-        s << "}";
-        if ((n_connections-count)>1) {
-            s << "," ;
-        }
-        s << "\n";
-        count ++;
-    }
-    s << "]}" << std::endl;
-    return s;
 }
 
 bool Trick::VariableServer::get_enabled() {

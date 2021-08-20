@@ -96,8 +96,7 @@ UTILS_DIRS := \
 	${TRICK_HOME}/trick_source/trick_utils/comm \
 	${TRICK_HOME}/trick_source/trick_utils/shm \
 	${TRICK_HOME}/trick_source/trick_utils/math \
-	${TRICK_HOME}/trick_source/trick_utils/units \
-	${TRICK_HOME}/trick_source/trick_utils/unicode
+	${TRICK_HOME}/trick_source/trick_utils/units
 UTILS_OBJS := $(addsuffix /object_$(TRICK_HOST_CPU)/*.o ,$(UTILS_DIRS))
 
 # filter out the directories that make their own libraries
@@ -122,13 +121,11 @@ SWIG_OBJS = $(addsuffix /object_$(TRICK_HOST_CPU)/*.o ,$(SWIG_DIRS))
 #-------------------------------------------------------------------------------
 UNIT_TEST_DIRS := \
     $(wildcard ${TRICK_HOME}/trick_source/sim_services/*/test) \
-    $(wildcard ${TRICK_HOME}/trick_source/trick_utils/*/test)
+    $(wildcard ${TRICK_HOME}/trick_source/trick_utils/*/test) \
+    ${TRICK_HOME}/trick_source/data_products/DPX/test/unit_test
 ifeq ($(USE_ER7_UTILS), 0)
   UNIT_TEST_DIRS := $(filter-out %Integrator/test,$(UNIT_TEST_DIRS))
 endif
-
-# DPX test excluded from releases because of size
-DPX_UNIT_TEST_DIR = ${TRICK_HOME}/trick_source/data_products/DPX/test/unit_test
 
 # The name of the ICG executable indicates the operating system, and the machine
 # hardware on which it is built. This allows pre-build ICG binaries to be
@@ -147,10 +144,6 @@ all: no_dp dp
 
 ifeq ($(USE_JAVA), 1)
 all: java
-endif
-
-ifeq ($(TRICK_CIVET), 1)
-icg_sim_serv: ${TRICK_LIB_DIR}/libtrickCivet.a
 endif
 
 #-------------------------------------------------------------------------------
@@ -183,16 +176,24 @@ $(UTILS_DIRS): icg_sim_serv
 # 1.1.1.3 Compile the objects in the specified er7_utils directories.
 .PHONY: $(ER7_UTILS_DIRS)
 $(ER7_UTILS_DIRS): TRICK_CXXFLAGS += -Wno-unused-parameter
-$(ER7_UTILS_DIRS): icg_sim_serv
+$(ER7_UTILS_DIRS): make_er7_makefiles icg_sim_serv
 	@ $(MAKE) -C $@ trick
+
+.PHONY: make_er7_makefiles
+make_er7_makefiles:
+	@for i in $(ER7_UTILS_DIRS) ; do \
+	   $(CP) ${TRICK_HOME}/trick_source/sim_services/Executive/Makefile $$i; \
+	done
+
+ifeq ($(USE_ER7_UTILS), 1)
+icg_sim_serv: | make_er7_makefiles
+endif
 
 # 1.1.1.4 Generate interface code (using ICG) for the specified sim_services
 # header files.
 .PHONY: icg_sim_serv
-# Replace -isystem with -I so ICG doesn't skip Trick headers
-icg_sim_serv: TRICK_SYSTEM_CXXFLAGS := $(subst -isystem,-I,$(TRICK_SYSTEM_CXXFLAGS))
 icg_sim_serv: $(ICG_EXE)
-	${ICG_EXE} -sim_services -m ${TRICK_CXXFLAGS} ${TRICK_SYSTEM_CXXFLAGS} ${TRICK_HOME}/include/trick/files_to_ICG.hh
+	${TRICK_HOME}/bin/trick-ICG -s -m ${TRICK_CXXFLAGS} ${TRICK_SYSTEM_CXXFLAGS} ${TRICK_HOME}/include/trick/files_to_ICG.hh
 
 # 1.1.1.4.1 Build the Interface Code Generator (ICG) executable.
 $(ICG_EXE) :
@@ -217,78 +218,13 @@ dp: ${TRICK_HOME}/trick_source/trick_utils/units
 	@ $(MAKE) -C ${TRICK_HOME}/trick_source/data_products
 
 #-------------------------------------------------------------------------------
-#
-
-#-------------------------------------------------------------------------------
-# 1.2 Build Trick's CivetWeb webserver.
-
-CIVET_CLONE_DIR = civetweb_clone
-
-.PHONY: civetweb
-civetweb: ${TRICK_LIB_DIR}/libtrickCivet.a
-
-${TRICK_LIB_DIR}/libtrickCivet.a: ${TRICK_LIB_DIR}/libcivetweb.a ${TRICK_HOME}/include/civet/civetweb.h ${TRICK_HOME}/include/civet/CivetServer.h
-	$(MAKE) -C ${TRICK_HOME}/trick_source/web/CivetServer
-
-${TRICK_LIB_DIR}/libcivetweb.a: ${CIVET_CLONE_DIR}/libcivetweb.a | ${TRICK_LIB_DIR}
-	cp ${CIVET_CLONE_DIR}/libcivetweb.a $(TRICK_LIB_DIR)/libcivetweb.a
-
-${TRICK_HOME}/include/civet:
-	mkdir -p ${TRICK_HOME}/include/civet
-
-${TRICK_HOME}/include/civet/civetweb.h: ${CIVET_CLONE_DIR} ${TRICK_HOME}/include/civet
-	cp ${CIVET_CLONE_DIR}/include/civetweb.h ${TRICK_HOME}/include/civet/civetweb.h
-
-${TRICK_HOME}/include/civet/CivetServer.h: ${CIVET_CLONE_DIR} ${TRICK_HOME}/include/civet
-	cp ${CIVET_CLONE_DIR}/include/CivetServer.h ${TRICK_HOME}/include/civet/CivetServer.h	
-
-
-ifeq (${TRICK_FORCE_32BIT},1)
-CIVET_COMPILE_FAGS=-m32
-else
-CIVET_COMPILE_FAGS=
-endif
-
-${CIVET_CLONE_DIR}/libcivetweb.a: ${CIVET_CLONE_DIR}
-	$(MAKE) -C ${CIVET_CLONE_DIR} lib COPT=${CIVET_COMPILE_FAGS} WITH_CPP=1 WITH_WEBSOCKET=1
-
-${CIVET_CLONE_DIR}:
-	git clone --branch v1.14 --depth 1 https://github.com/civetweb/civetweb.git $@
-
-#-------------------------------------------------------------------------------
 # 1.3 Build Trick's Java Tools
-
-JAVA_BUILD_DIR = ${TRICK_HOME}/libexec/trick/java/build
-
-ifeq (${TRICK_OFFLINE}, 0)
-java: ${JAVA_BUILD_DIR}
-
-${JAVA_BUILD_DIR}: 
+java:
 	@ $(MAKE) -C ${TRICK_HOME}/trick_source/java
 
 .PHONY: javadoc
 javadoc:
 	@ $(MAKE) -C ${TRICK_HOME}/trick_source/java $@
-else
-JAVA_SOURCE_DIR = ${TRICK_HOME}/trick-offline
-JARS = DP Dre JXPlot MM MTV QP Sie SimControl SimSniffer TrickView trick-java-${TRICK_VERSION}
-JAR_TARGETS = $(foreach JAR, $(JARS), ${JAVA_BUILD_DIR}/$(JAR).jar)
-
-define JAR_FUN
-$${JAVA_BUILD_DIR}/$(1).jar: $${JAVA_SOURCE_DIR}/$(1).jar | $${JAVA_BUILD_DIR}
-	cp $$< $$@
-
-endef
-
-$(foreach JAR,$(JARS),$(eval $(call JAR_FUN,$(JAR))))
-
-${JAVA_BUILD_DIR}: 
-	mkdir -p ${TRICK_HOME}/libexec/trick/java/build
-
-java: ${JAR_TARGETS} 
-	@echo offline mode: java code copied successfully
-
-endif
 
 #-------------------------------------------------------------------------------
 # 1.4 This target builds the Trick Documentation.
@@ -320,21 +256,11 @@ test: unit_test sim_test
 $(UNIT_TEST_DIRS):
 	@ $(MAKE) -C $@ test
 
-unit_test: $(UNIT_TEST_DIRS) $(DPX_UNIT_TEST_DIR)
-
-# DPX test excluded from releases because of size
-.PHONY: $(DPX_UNIT_TEST_DIR)
-$(DPX_UNIT_TEST_DIR):
-	@ if [ -d ${DPX_UNIT_TEST_DIR} ]; then $(MAKE) -C $@ test; fi
-
+unit_test: $(UNIT_TEST_DIRS)
 
 sim_test:
 	@ $(MAKE) -C test
 	@ $(MAKE) -C trick_sims test
-
-pytest:
-	make -C share/trick/pymods/trick
-
 
 #requirements:
 #	@ $(MAKE) -C trick_test/requirements_docs install
@@ -344,7 +270,7 @@ pytest:
 ################################################################################
 
 
-clean: clean_sim_serv clean_utils clean_swig clean_dp clean_ICG clean_java clean_sim_serv_xml
+clean: clean_sim_serv clean_utils clean_swig clean_dp clean_ICG clean_java
 	@/bin/rm -rf $(TRICK_BIN_DIR)
 	@/bin/rm -rf $(TRICK_LIB_DIR)
 
@@ -358,9 +284,10 @@ clean_sim_serv:
 	done
 	@ $(MAKE) -C ${TRICK_HOME}/trick_source/sim_services/mains real_clean
 
-clean_er7_utils: 
+clean_er7_utils: make_er7_makefiles
 	@for i in $(ER7_UTILS_DIRS) ; do \
 	   $(MAKE) -C $$i real_clean ; \
+	   rm $$i/Makefile; \
 	done
 
 clean_utils:
@@ -372,6 +299,10 @@ clean_swig:
 	@for i in $(SWIG_DIRS) ; do \
 	   $(MAKE) -C $$i real_clean ; \
 	done
+
+ifeq ($(USE_ER7_UTILS), 1)
+clean_swig: make_er7_makefiles
+endif
 
 clean_ICG :
 	$(MAKE) -C ${TRICK_HOME}/trick_source/codegen/Interface_Code_Gen  clean
@@ -391,9 +322,6 @@ clean_dp:
 
 clean_java:
 	@ $(MAKE) -C ${TRICK_HOME}/trick_source/java clean
-
-clean_sim_serv_xml:
-	@/bin/rm -rf ${TRICK_HOME}/share/trick/xml/*
 
 
 # FIXME: Seems to me that the for loop below should be removed and that the
@@ -472,14 +400,12 @@ uninstall:
 ################################################################################
 # ICG all sim_services files (for testing and debugging ICG).
 # The -f flag forces io_src files to be regenerated whether or not they need to be.
-# Replace -isystem with -I so ICG doesn't skip Trick headers
-ICG: TRICK_SYSTEM_CXXFLAGS := $(subst -isystem,-I,$(TRICK_SYSTEM_CXXFLAGS))
 ICG: $(ICG_EXE)
-	$(ICG_EXE) -f -s -m -n ${TRICK_CXXFLAGS} ${TRICK_SYSTEM_CXXFLAGS} ${TRICK_HOME}/include/trick/files_to_ICG.hh
+	${TRICK_HOME}/bin/trick-ICG -f -s -m -n ${TRICK_CXXFLAGS} ${TRICK_SYSTEM_CXXFLAGS} ${TRICK_HOME}/include/trick/files_to_ICG.hh
 
 # This builds a tricklib share library.
 trick_lib: $(SIM_SERV_DIRS) $(UTILS_DIRS) | $(TRICK_LIB_DIR)
-	${TRICK_CXX} $(SHARED_LIB_OPT) -o ${TRICK_LIB_DIR}/libtrick.so $(SIM_SERV_OBJS) $(UTILS_OBJS)
+	${TRICK_CPPC} $(SHARED_LIB_OPT) -o ${TRICK_LIB_DIR}/libtrick.so $(SIM_SERV_OBJS) $(UTILS_OBJS)
 
 # For NASA/JSC developers include optional rules
 -include Makefile_jsc_dirs

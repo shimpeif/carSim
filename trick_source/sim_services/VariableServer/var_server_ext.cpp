@@ -1,6 +1,5 @@
 
 #include <iostream>
-#include <string.h>
 
 #include "trick/VariableServer.hh"
 #include "trick/exec_proto.h"
@@ -388,16 +387,12 @@ Trick::VariableServer * var_server_get_var_server() {
     return the_vs ;
 }
 
-extern "C" void var_server_list_connections(void) {
-    std::cout << *the_vs << std::endl;
-}
-
 /**
  * @relates Trick::VariableServer
  * @copydoc Trick::VariableServer::get_hostname
  * C wrapper Trick::VariableServer::get_hostname
  */
-extern "C" const char * var_server_get_hostname(void) {
+extern "C" const char * var_server_get_hostname() {
     return(the_vs->get_hostname()) ;
 }
 
@@ -406,7 +401,7 @@ extern "C" const char * var_server_get_hostname(void) {
  * @copydoc Trick::VariableServer::get_port
  * C wrapper Trick::VariableServer::get_port
  */
-extern "C" unsigned short var_server_get_port(void) {
+extern "C" unsigned short var_server_get_port() {
     return(the_vs->get_listen_thread().get_port()) ;
 }
 
@@ -433,7 +428,7 @@ extern "C" void var_server_set_source_address(const char * source_address) {
  * @copydoc Trick::VariableServer::get_user_tag
  * C wrapper Trick::VariableServer::get_user_tag
  */
-extern "C" const char * var_server_get_user_tag(void) {
+extern "C" const char * var_server_get_user_tag() {
     return(the_vs->get_listen_thread().get_user_tag().c_str()) ;
 }
 
@@ -451,7 +446,7 @@ extern "C" void var_server_set_user_tag(const char * in_tag) {
  * @copydoc Trick::VariableServer::get_enabled
  * C wrapper Trick::VariableServer::get_enabled
  */
-extern "C" int var_server_get_enabled(void) {
+extern "C" int var_server_get_enabled() {
     return(the_vs->get_enabled()) ;
 }
 
@@ -523,7 +518,7 @@ void var_set_value< void * > ( V_DATA & v_data , void * value ) {
 
 template<class T>
 int var_set_base( const char  * var , T value , const char * units ) {
-    REF2 *ref = ref_attributes(var) ;
+    REF2 *ref = ref_attributes((char *)var) ;
     if ( ref != NULL ) {
         if (ref->attr->io & TRICK_VAR_INPUT) {
             V_TREE v_tree ;
@@ -531,14 +526,11 @@ int var_set_base( const char  * var , T value , const char * units ) {
             v_tree.v_data = &v_data ;
             var_set_value( v_data , value) ;
             if ( units != NULL ) {
-                ref->units = strdup(map_trick_units_to_udunits(units).c_str()) ;
+                ref->units = (char *)(map_trick_units_to_udunits(units).c_str()) ;
             } else {
-                ref->units = NULL ;
+                ref->units = (char *)units ;
             }
             ref_assignment(ref , &v_tree) ;
-            if(ref->units != NULL) {
-                free(ref->units) ;
-            }
             free(ref) ;
         } else {
             message_publish(MSG_WARNING,"Cannot assign to %s because io_spec does not allow input\n", var) ;

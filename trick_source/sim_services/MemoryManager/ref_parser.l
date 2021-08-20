@@ -17,11 +17,7 @@
 #include <ctype.h>
 #include "trick/mm_error.h"
 #include "trick/RefParseContext.hh"
-#include "ref_parser.tab.hpp"
-
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wsign-compare"
-#pragma GCC diagnostic ignored "-Wunused-function"
+#include "ref_parser.tab.h"
 
 #define YY_EXTRA_TYPE RefParseContext*
 
